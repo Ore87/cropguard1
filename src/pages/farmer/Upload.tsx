@@ -14,6 +14,8 @@ const Upload = () => {
   const [droneFile, setDroneFile] = useState<File | null>(null);
   const [spotCheckLoading, setSpotCheckLoading] = useState(false);
   const [droneLoading, setDroneLoading] = useState(false);
+  const [spotCheckPreview, setSpotCheckPreview] = useState<string | null>(null);
+  const [dronePreview, setDronePreview] = useState<string | null>(null);
 
   const handleSpotCheck = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -143,19 +145,32 @@ const Upload = () => {
                   </label>
                   <Input
                     type="file"
-                    accept="image/*"
-                    onChange={(e) => setSpotCheckFile(e.target.files?.[0] || null)}
+                    accept="image/*,video/*"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0] || null;
+                      setSpotCheckFile(file);
+                      if (file) {
+                        setSpotCheckPreview(URL.createObjectURL(file));
+                      } else {
+                        setSpotCheckPreview(null);
+                      }
+                    }}
                     disabled={spotCheckLoading}
                   />
                   <p className="text-xs text-muted-foreground">
-                    Supported formats: JPG, PNG, WEBP
+                    Supported formats: JPG, PNG, WEBP, MP4, AVI, MOV
                   </p>
                 </div>
                 
-                {spotCheckFile && (
-                  <div className="rounded-lg border border-border p-4">
+                {spotCheckFile && spotCheckPreview && (
+                  <div className="rounded-lg border border-border p-4 space-y-2">
                     <p className="text-sm font-medium text-foreground">Selected file:</p>
                     <p className="text-sm text-muted-foreground">{spotCheckFile.name}</p>
+                    {spotCheckFile.type.startsWith('image/') ? (
+                      <img src={spotCheckPreview} alt="Preview" className="w-full rounded-md mt-2" />
+                    ) : (
+                      <video src={spotCheckPreview} controls className="w-full rounded-md mt-2" />
+                    )}
                   </div>
                 )}
 
@@ -165,7 +180,7 @@ const Upload = () => {
                   disabled={spotCheckLoading || !spotCheckFile}
                 >
                   <UploadIcon className="mr-2 h-4 w-4" />
-                  {spotCheckLoading ? "Analyzing..." : "Analyze Image"}
+                  {spotCheckLoading ? "Analyzing..." : "Upload Image or Video"}
                 </Button>
               </form>
             </CardContent>
@@ -189,19 +204,32 @@ const Upload = () => {
                   </label>
                   <Input
                     type="file"
-                    accept="image/*"
-                    onChange={(e) => setDroneFile(e.target.files?.[0] || null)}
+                    accept="image/*,video/*"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0] || null;
+                      setDroneFile(file);
+                      if (file) {
+                        setDronePreview(URL.createObjectURL(file));
+                      } else {
+                        setDronePreview(null);
+                      }
+                    }}
                     disabled={droneLoading}
                   />
                   <p className="text-xs text-muted-foreground">
-                    Supported formats: JPG, PNG, WEBP
+                    Supported formats: JPG, PNG, WEBP, MP4, AVI, MOV
                   </p>
                 </div>
                 
-                {droneFile && (
-                  <div className="rounded-lg border border-border p-4">
+                {droneFile && dronePreview && (
+                  <div className="rounded-lg border border-border p-4 space-y-2">
                     <p className="text-sm font-medium text-foreground">Selected file:</p>
                     <p className="text-sm text-muted-foreground">{droneFile.name}</p>
+                    {droneFile.type.startsWith('image/') ? (
+                      <img src={dronePreview} alt="Preview" className="w-full rounded-md mt-2" />
+                    ) : (
+                      <video src={dronePreview} controls className="w-full rounded-md mt-2" />
+                    )}
                   </div>
                 )}
 
@@ -211,7 +239,7 @@ const Upload = () => {
                   disabled={droneLoading || !droneFile}
                 >
                   <UploadIcon className="mr-2 h-4 w-4" />
-                  {droneLoading ? "Processing..." : "Process Drone Data"}
+                  {droneLoading ? "Processing..." : "Upload Image or Video"}
                 </Button>
               </form>
             </CardContent>
@@ -233,8 +261,8 @@ const Upload = () => {
             <div>
               <h3 className="font-semibold text-foreground mb-2">Drone Flight</h3>
               <p className="text-sm text-muted-foreground">
-                For comprehensive field analysis. Upload high-resolution aerial images to detect 
-                pest infestations across large areas. Only image files are supported.
+                For comprehensive field analysis. Upload high-resolution aerial imagery or drone footage to detect 
+                pest infestations across large areas.
               </p>
             </div>
           </CardContent>
