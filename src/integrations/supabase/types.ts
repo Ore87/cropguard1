@@ -55,6 +55,7 @@ export type Database = {
       analysis_reports: {
         Row: {
           analyzed_at: string
+          analyzed_media: string | null
           bounding_boxes: Json | null
           confidence_score: number | null
           created_at: string
@@ -62,11 +63,13 @@ export type Database = {
           id: string
           image_url: string
           infestation_level: string | null
+          media_type: string | null
           pest_types: Json | null
           scan_type: string
         }
         Insert: {
           analyzed_at?: string
+          analyzed_media?: string | null
           bounding_boxes?: Json | null
           confidence_score?: number | null
           created_at?: string
@@ -74,11 +77,13 @@ export type Database = {
           id?: string
           image_url: string
           infestation_level?: string | null
+          media_type?: string | null
           pest_types?: Json | null
           scan_type: string
         }
         Update: {
           analyzed_at?: string
+          analyzed_media?: string | null
           bounding_boxes?: Json | null
           confidence_score?: number | null
           created_at?: string
@@ -86,6 +91,7 @@ export type Database = {
           id?: string
           image_url?: string
           infestation_level?: string | null
+          media_type?: string | null
           pest_types?: Json | null
           scan_type?: string
         }
