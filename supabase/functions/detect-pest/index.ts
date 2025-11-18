@@ -130,41 +130,55 @@ serve(async (req) => {
     const detectionResult = await aiResponse.json();
     console.log('Detection result:', JSON.stringify(detectionResult));
 
-    // Extract detection information
+    // Extract detection information from new API format
+    const mediaType = detectionResult.type || 'image'; // 'image' or 'video'
+    const analyzedMedia = detectionResult.analyzed_image || detectionResult.analyzed_video || '';
+    const detectionsCount = detectionResult.detections_count || 0;
+    
+    // For backward compatibility, try to get detections array if available
     const detections = detectionResult.detections || [];
     
-    // Calculate infestation level based on number of detections
+    // Calculate infestation level based on detections count
     let infestationLevel = 'none';
     let confidenceScore = 0;
     const pestTypes: string[] = [];
 
-    if (detections.length > 0) {
-      // Calculate average confidence
-      confidenceScore = detections.reduce((sum: number, det: any) => sum + (det.confidence || 0), 0) / detections.length;
+    if (detectionsCount > 0 || detections.length > 0) {
+      const count = detectionsCount || detections.length;
+      
+      // Calculate average confidence if detections array is available
+      if (detections.length > 0) {
+        confidenceScore = detections.reduce((sum: number, det: any) => sum + (det.confidence || 0), 0) / detections.length;
+        
+        // Extract unique pest types
+        const uniquePests = new Set<string>(detections.map((det: any) => det.class || 'Fall Armyworm'));
+        pestTypes.push(...Array.from(uniquePests));
+      } else {
+        confidenceScore = 0.85; // Default confidence when only count is provided
+        pestTypes.push('Fall Armyworm');
+      }
       
       // Determine infestation level
-      if (detections.length >= 10) {
+      if (count >= 10) {
         infestationLevel = 'critical';
-      } else if (detections.length >= 5) {
+      } else if (count >= 5) {
         infestationLevel = 'high';
-      } else if (detections.length >= 2) {
+      } else if (count >= 2) {
         infestationLevel = 'moderate';
       } else {
         infestationLevel = 'low';
       }
-
-      // Extract unique pest types
-      const uniquePests = new Set<string>(detections.map((det: any) => det.class || 'Fall Armyworm'));
-      pestTypes.push(...Array.from(uniquePests));
     }
 
-    // Save to database
+    // Save to database with new fields
     const { data: reportData, error: insertError } = await supabase
       .from('analysis_reports')
       .insert({
         farm_id: farmData.id,
         scan_type: scanType,
         image_url: imageUrl,
+        media_type: mediaType,
+        analyzed_media: analyzedMedia,
         infestation_level: infestationLevel,
         confidence_score: confidenceScore,
         pest_types: pestTypes,
@@ -188,9 +202,11 @@ serve(async (req) => {
       JSON.stringify({
         reportId: reportData.id,
         detections,
+        detectionsCount,
         infestationLevel,
         confidenceScore,
         pestTypes,
+        mediaType,
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );

@@ -18,6 +18,8 @@ interface Report {
   id: string;
   scan_type: string;
   image_url: string;
+  media_type: string;
+  analyzed_media: string;
   infestation_level: string;
   confidence_score: number;
   pest_types: string[];
@@ -31,6 +33,7 @@ const ReportDetails = () => {
   const [loading, setLoading] = useState(true);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const imageRef = useRef<HTMLImageElement>(null);
+  const videoRef = useRef<HTMLVideoElement>(null);
 
   useEffect(() => {
     if (reportId) {
@@ -184,19 +187,32 @@ const ReportDetails = () => {
               <CardTitle>Detection Results</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="relative">
-                <img
-                  ref={imageRef}
-                  src={report.image_url}
-                  alt="Analyzed crop"
-                  className="hidden"
-                  crossOrigin="anonymous"
-                />
-                <canvas
-                  ref={canvasRef}
-                  className="w-full rounded-lg border border-border"
-                />
-              </div>
+              {report.media_type === 'video' ? (
+                <div className="relative">
+                  <video
+                    ref={videoRef}
+                    controls
+                    className="w-full rounded-lg border border-border"
+                    src={`data:video/mp4;base64,${report.analyzed_media}`}
+                  >
+                    Your browser does not support the video tag.
+                  </video>
+                </div>
+              ) : (
+                <div className="relative">
+                  <img
+                    ref={imageRef}
+                    src={report.analyzed_media ? `data:image/jpeg;base64,${report.analyzed_media}` : report.image_url}
+                    alt="Analyzed crop"
+                    className="hidden"
+                    crossOrigin="anonymous"
+                  />
+                  <canvas
+                    ref={canvasRef}
+                    className="w-full rounded-lg border border-border"
+                  />
+                </div>
+              )}
               
               {report.bounding_boxes && report.bounding_boxes.length > 0 && (
                 <div className="mt-4">

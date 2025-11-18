@@ -57,7 +57,7 @@ const Upload = () => {
         throw new Error(error.message);
       }
 
-      toast.success(`Detection complete! Found ${data.detections.length} pest(s)`);
+      toast.success(`Detection complete! Found ${data.detectionsCount || data.detections?.length || 0} pest(s)`);
       
       // Redirect to report details
       navigate(`/farmer/report/${data.reportId}`);
@@ -109,7 +109,7 @@ const Upload = () => {
         throw new Error(error.message);
       }
 
-      toast.success(`Detection complete! Found ${data.detections.length} pest(s)`);
+      toast.success(`Detection complete! Found ${data.detectionsCount || data.detections?.length || 0} pest(s)`);
       
       // Redirect to report details
       navigate(`/farmer/report/${data.reportId}`);
