@@ -1,12 +1,15 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Layout } from "@/components/Layout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Upload as UploadIcon, Camera, Plane } from "lucide-react";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 
 const Upload = () => {
+  const navigate = useNavigate();
   const [spotCheckFile, setSpotCheckFile] = useState<File | null>(null);
   const [droneFile, setDroneFile] = useState<File | null>(null);
   const [spotCheckLoading, setSpotCheckLoading] = useState(false);
@@ -20,13 +23,48 @@ const Upload = () => {
     }
 
     setSpotCheckLoading(true);
-    toast.info("This feature requires the EXTERNAL_AI_URL secret to be configured");
     
-    // TODO: Implement API call to external AI service
-    setTimeout(() => {
+    try {
+      // Upload image to storage
+      const fileExt = spotCheckFile.name.split('.').pop();
+      const fileName = `${Math.random()}.${fileExt}`;
+      const filePath = `${fileName}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from('crop-scans')
+        .upload(filePath, spotCheckFile);
+
+      if (uploadError) {
+        throw new Error(`Upload failed: ${uploadError.message}`);
+      }
+
+      // Get public URL
+      const { data: { publicUrl } } = supabase.storage
+        .from('crop-scans')
+        .getPublicUrl(filePath);
+
+      // Call detection edge function
+      const { data, error } = await supabase.functions.invoke('detect-pest', {
+        body: { 
+          imageUrl: publicUrl,
+          scanType: 'spot_check'
+        }
+      });
+
+      if (error) {
+        throw new Error(error.message);
+      }
+
+      toast.success(`Detection complete! Found ${data.detections.length} pest(s)`);
+      
+      // Redirect to report details
+      navigate(`/farmer/report/${data.reportId}`);
+    } catch (error) {
+      console.error('Error during spot check:', error);
+      toast.error(error instanceof Error ? error.message : 'Failed to analyze image');
+    } finally {
       setSpotCheckLoading(false);
-      toast.success("Image uploaded successfully (simulation)");
-    }, 2000);
+    }
   };
 
   const handleDroneFlight = async (e: React.FormEvent) => {
@@ -37,13 +75,48 @@ const Upload = () => {
     }
 
     setDroneLoading(true);
-    toast.info("This feature requires the EXTERNAL_AI_URL secret to be configured");
     
-    // TODO: Implement API call to external AI service
-    setTimeout(() => {
+    try {
+      // Upload image to storage
+      const fileExt = droneFile.name.split('.').pop();
+      const fileName = `${Math.random()}.${fileExt}`;
+      const filePath = `${fileName}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from('crop-scans')
+        .upload(filePath, droneFile);
+
+      if (uploadError) {
+        throw new Error(`Upload failed: ${uploadError.message}`);
+      }
+
+      // Get public URL
+      const { data: { publicUrl } } = supabase.storage
+        .from('crop-scans')
+        .getPublicUrl(filePath);
+
+      // Call detection edge function
+      const { data, error } = await supabase.functions.invoke('detect-pest', {
+        body: { 
+          imageUrl: publicUrl,
+          scanType: 'drone_flight'
+        }
+      });
+
+      if (error) {
+        throw new Error(error.message);
+      }
+
+      toast.success(`Detection complete! Found ${data.detections.length} pest(s)`);
+      
+      // Redirect to report details
+      navigate(`/farmer/report/${data.reportId}`);
+    } catch (error) {
+      console.error('Error during drone flight:', error);
+      toast.error(error instanceof Error ? error.message : 'Failed to analyze image');
+    } finally {
       setDroneLoading(false);
-      toast.success("Drone imagery uploaded successfully (simulation)");
-    }, 2000);
+    }
   };
 
   return (
