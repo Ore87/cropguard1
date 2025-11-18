@@ -185,16 +185,16 @@ const Upload = () => {
               <form onSubmit={handleDroneFlight} className="space-y-4">
                 <div className="space-y-2">
                   <label className="text-sm font-medium text-foreground">
-                    Upload Drone Imagery
+                    Upload High-Resolution Image
                   </label>
                   <Input
                     type="file"
-                    accept="image/*,video/*"
+                    accept="image/*"
                     onChange={(e) => setDroneFile(e.target.files?.[0] || null)}
                     disabled={droneLoading}
                   />
                   <p className="text-xs text-muted-foreground">
-                    Supported formats: JPG, PNG, MP4, MOV
+                    Supported formats: JPG, PNG, WEBP
                   </p>
                 </div>
                 
@@ -233,8 +233,8 @@ const Upload = () => {
             <div>
               <h3 className="font-semibold text-foreground mb-2">Drone Flight</h3>
               <p className="text-sm text-muted-foreground">
-                For comprehensive field analysis. Upload high-resolution aerial imagery to detect 
-                pest infestations across large areas with precise geolocation data.
+                For comprehensive field analysis. Upload high-resolution aerial images to detect 
+                pest infestations across large areas. Only image files are supported.
               </p>
             </div>
           </CardContent>
