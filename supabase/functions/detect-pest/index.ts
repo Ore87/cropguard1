@@ -80,11 +80,12 @@ serve(async (req) => {
       );
     }
 
-    // Prepare multipart form data
+    // Prepare multipart form data with proper file blob
     const formData = new FormData();
-    formData.append('file', imageData, 'image.jpg');
+    const blob = new Blob([imageData], { type: 'image/jpeg' });
+    formData.append('file', blob, 'image.jpg');
 
-    console.log('Calling AI detection API...');
+    console.log('Calling AI detection API with image size:', imageData.size);
 
     // Call the external AI API
     const aiResponse = await fetch('https://Ore5187-cropguard-ai-backend.hf.space/detect/', {
