@@ -81,10 +81,34 @@ serve(async (req) => {
       );
     }
 
+    // Detect file type and set appropriate MIME type
+    const fileExtension = imagePath.split('.').pop()?.toLowerCase();
+    let mimeType = 'image/jpeg';
+    let fileName = 'file.jpg';
+    
+    if (fileExtension === 'mp4') {
+      mimeType = 'video/mp4';
+      fileName = 'video.mp4';
+    } else if (fileExtension === 'avi') {
+      mimeType = 'video/x-msvideo';
+      fileName = 'video.avi';
+    } else if (fileExtension === 'mov') {
+      mimeType = 'video/quicktime';
+      fileName = 'video.mov';
+    } else if (fileExtension === 'png') {
+      mimeType = 'image/png';
+      fileName = 'image.png';
+    } else if (fileExtension === 'webp') {
+      mimeType = 'image/webp';
+      fileName = 'image.webp';
+    }
+
+    console.log('File type detected:', fileExtension, 'MIME type:', mimeType);
+
     // Prepare multipart form data with proper file blob
     const formData = new FormData();
-    const blob = new Blob([imageData], { type: 'image/jpeg' });
-    formData.append('file', blob, 'image.jpg');
+    const blob = new Blob([imageData], { type: mimeType });
+    formData.append('file', blob, fileName);
 
     console.log('Calling AI detection API with image size:', imageData.size);
 
