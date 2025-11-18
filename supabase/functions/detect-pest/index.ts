@@ -68,6 +68,16 @@ serve(async (req) => {
     }
 
     const imagePath = imagePathMatch[1];
+    
+    // Validate file type
+    const fileExtension = imagePath.split('.').pop()?.toLowerCase();
+    const validExtensions = ['jpg', 'jpeg', 'png', 'webp'];
+    if (!fileExtension || !validExtensions.includes(fileExtension)) {
+      return new Response(
+        JSON.stringify({ error: 'Invalid file type. Only image files (JPG, PNG, WEBP) are supported.' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
     const { data: imageData, error: downloadError } = await supabase.storage
       .from('crop-scans')
       .download(imagePath);
