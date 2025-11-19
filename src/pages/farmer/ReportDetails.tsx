@@ -137,7 +137,7 @@ const ReportDetails = () => {
                   <video
                     controls
                     className="w-full rounded-lg border border-border"
-                    src={report.analyzed_media ? `data:video/mp4;base64,${report.analyzed_media}` : report.image_url}
+                    src={report.analyzed_media || report.image_url}
                   >
                     Your browser does not support the video tag.
                   </video>
@@ -145,7 +145,7 @@ const ReportDetails = () => {
               ) : (
                 <div className="relative">
                   <img
-                    src={report.analyzed_media ? `data:image/jpeg;base64,${report.analyzed_media}` : report.image_url}
+                    src={report.analyzed_media || report.image_url}
                     alt="Analyzed crop with detected pests"
                     className="w-full rounded-lg border border-border"
                   />
