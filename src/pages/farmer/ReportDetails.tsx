@@ -31,9 +31,6 @@ const ReportDetails = () => {
   const { reportId } = useParams<{ reportId: string }>();
   const [report, setReport] = useState<Report | null>(null);
   const [loading, setLoading] = useState(true);
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-  const imageRef = useRef<HTMLImageElement>(null);
-  const videoRef = useRef<HTMLVideoElement>(null);
 
   useEffect(() => {
     if (reportId) {
@@ -64,58 +61,6 @@ const ReportDetails = () => {
     }
   };
 
-  useEffect(() => {
-    if (report && imageRef.current && canvasRef.current) {
-      drawBoundingBoxes();
-    }
-  }, [report]);
-
-  const drawBoundingBoxes = () => {
-    const canvas = canvasRef.current;
-    const image = imageRef.current;
-    
-    if (!canvas || !image || !report) return;
-
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
-
-    // Wait for image to load
-    if (!image.complete) {
-      image.onload = () => drawBoundingBoxes();
-      return;
-    }
-
-    // Set canvas size to match image
-    canvas.width = image.naturalWidth;
-    canvas.height = image.naturalHeight;
-
-    // Draw the image
-    ctx.drawImage(image, 0, 0);
-
-    // Draw bounding boxes
-    if (report.bounding_boxes && report.bounding_boxes.length > 0) {
-      report.bounding_boxes.forEach((detection: Detection) => {
-        const [x, y, width, height] = detection.box;
-        
-        // Draw box
-        ctx.strokeStyle = '#ef4444'; // red
-        ctx.lineWidth = 3;
-        ctx.strokeRect(x, y, width, height);
-
-        // Draw label background
-        const label = `${detection.class} (${(detection.confidence * 100).toFixed(1)}%)`;
-        ctx.font = 'bold 16px Arial';
-        const textWidth = ctx.measureText(label).width;
-        
-        ctx.fillStyle = '#ef4444';
-        ctx.fillRect(x, y - 25, textWidth + 10, 25);
-
-        // Draw label text
-        ctx.fillStyle = '#ffffff';
-        ctx.fillText(label, x + 5, y - 7);
-      });
-    }
-  };
 
   const getSeverityColor = (level: string) => {
     switch (level) {
@@ -190,10 +135,9 @@ const ReportDetails = () => {
               {report.media_type === 'video' ? (
                 <div className="relative">
                   <video
-                    ref={videoRef}
                     controls
                     className="w-full rounded-lg border border-border"
-                    src={`data:video/mp4;base64,${report.analyzed_media}`}
+                    src={report.analyzed_media ? `data:video/mp4;base64,${report.analyzed_media}` : report.image_url}
                   >
                     Your browser does not support the video tag.
                   </video>
@@ -201,14 +145,8 @@ const ReportDetails = () => {
               ) : (
                 <div className="relative">
                   <img
-                    ref={imageRef}
                     src={report.analyzed_media ? `data:image/jpeg;base64,${report.analyzed_media}` : report.image_url}
-                    alt="Analyzed crop"
-                    className="hidden"
-                    crossOrigin="anonymous"
-                  />
-                  <canvas
-                    ref={canvasRef}
+                    alt="Analyzed crop with detected pests"
                     className="w-full rounded-lg border border-border"
                   />
                 </div>
