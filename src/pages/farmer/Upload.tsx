@@ -28,42 +28,77 @@ const Upload = () => {
   const startCamera = async () => {
     try {
       setCameraError(null);
+      console.log('Requesting camera access...');
+      
       const stream = await navigator.mediaDevices.getUserMedia({ 
-        video: { facingMode: 'environment' } 
+        video: { 
+          facingMode: 'environment',
+          width: { ideal: 1280 },
+          height: { ideal: 720 }
+        } 
       });
+      
+      console.log('Camera access granted, stream obtained');
       streamRef.current = stream;
       
-      if (videoRef.current) {
-        // Set up the event listener BEFORE setting srcObject
-        const videoElement = videoRef.current;
-        
-        await new Promise<void>((resolve, reject) => {
-          const timeout = setTimeout(() => {
-            reject(new Error('Video loading timeout'));
-          }, 10000);
-          
-          videoElement.onloadedmetadata = async () => {
-            try {
-              await videoElement.play();
-              clearTimeout(timeout);
-              resolve();
-            } catch (playError) {
-              clearTimeout(timeout);
-              reject(playError);
-            }
-          };
-          
-          // Now set the srcObject to trigger the event
-          videoElement.srcObject = stream;
-        });
+      if (!videoRef.current) {
+        throw new Error('Video element not available');
       }
+      
+      const videoElement = videoRef.current;
+      
+      // Set srcObject first
+      videoElement.srcObject = stream;
+      console.log('Stream assigned to video element');
+      
+      // Wait for metadata to load
+      await new Promise<void>((resolve, reject) => {
+        const timeout = setTimeout(() => {
+          reject(new Error('Video loading timeout'));
+        }, 10000);
+        
+        videoElement.onloadedmetadata = () => {
+          console.log('Video metadata loaded', {
+            width: videoElement.videoWidth,
+            height: videoElement.videoHeight
+          });
+          clearTimeout(timeout);
+          resolve();
+        };
+      });
+      
+      // Explicitly play the video
+      console.log('Attempting to play video...');
+      await videoElement.play();
+      console.log('Video playing successfully');
+      
+      // Wait a bit for the first frame to render
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      // Verify video is actually playing
+      if (videoElement.videoWidth === 0 || videoElement.videoHeight === 0) {
+        throw new Error('Video dimensions are invalid');
+      }
+      
+      console.log('Camera ready with dimensions:', {
+        width: videoElement.videoWidth,
+        height: videoElement.videoHeight
+      });
       
       setLiveScanActive(true);
       toast.success("Camera ready");
     } catch (error) {
-      console.error('Camera access error:', error);
-      setCameraError("Camera access denied. Please enable camera permissions in your browser settings.");
-      toast.error("Failed to access camera");
+      console.error('Camera initialization error:', error);
+      
+      // Clean up stream on error
+      if (streamRef.current) {
+        streamRef.current.getTracks().forEach(track => track.stop());
+        streamRef.current = null;
+      }
+      
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      setCameraError(`Camera initialization failed: ${errorMessage}`);
+      toast.error("Failed to start camera");
     }
   };
 
@@ -300,8 +335,8 @@ const Upload = () => {
                 <div className="relative aspect-video bg-muted rounded-lg overflow-hidden">
                   <video
                     ref={videoRef}
-                    autoPlay
                     playsInline
+                    muted
                     className="w-full h-full object-cover"
                   />
                 </div>
