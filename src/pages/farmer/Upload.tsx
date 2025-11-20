@@ -32,18 +32,32 @@ const Upload = () => {
         video: { facingMode: 'environment' } 
       });
       streamRef.current = stream;
+      
       if (videoRef.current) {
-        videoRef.current.srcObject = stream;
-        // Wait for video to be ready
-        await new Promise<void>((resolve) => {
-          if (videoRef.current) {
-            videoRef.current.onloadedmetadata = () => {
-              videoRef.current?.play();
+        // Set up the event listener BEFORE setting srcObject
+        const videoElement = videoRef.current;
+        
+        await new Promise<void>((resolve, reject) => {
+          const timeout = setTimeout(() => {
+            reject(new Error('Video loading timeout'));
+          }, 10000);
+          
+          videoElement.onloadedmetadata = async () => {
+            try {
+              await videoElement.play();
+              clearTimeout(timeout);
               resolve();
-            };
-          }
+            } catch (playError) {
+              clearTimeout(timeout);
+              reject(playError);
+            }
+          };
+          
+          // Now set the srcObject to trigger the event
+          videoElement.srcObject = stream;
         });
       }
+      
       setLiveScanActive(true);
       toast.success("Camera ready");
     } catch (error) {
