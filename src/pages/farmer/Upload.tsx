@@ -34,9 +34,18 @@ const Upload = () => {
       streamRef.current = stream;
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
+        // Wait for video to be ready
+        await new Promise<void>((resolve) => {
+          if (videoRef.current) {
+            videoRef.current.onloadedmetadata = () => {
+              videoRef.current?.play();
+              resolve();
+            };
+          }
+        });
       }
       setLiveScanActive(true);
-      toast.success("Camera access granted");
+      toast.success("Camera ready");
     } catch (error) {
       console.error('Camera access error:', error);
       setCameraError("Camera access denied. Please enable camera permissions in your browser settings.");
@@ -60,6 +69,11 @@ const Upload = () => {
 
     setLiveScanLoading(true);
     try {
+      // Verify video is ready with valid dimensions
+      if (videoRef.current.videoWidth === 0 || videoRef.current.videoHeight === 0) {
+        throw new Error('Video stream not ready. Please wait a moment and try again.');
+      }
+
       // Create canvas to capture frame
       const canvas = document.createElement('canvas');
       canvas.width = videoRef.current.videoWidth;
@@ -73,7 +87,7 @@ const Upload = () => {
       const blob = await new Promise<Blob>((resolve, reject) => {
         canvas.toBlob((b) => {
           if (b) resolve(b);
-          else reject(new Error('Failed to capture frame'));
+          else reject(new Error('Failed to convert frame to image'));
         }, 'image/jpeg', 0.95);
       });
 
