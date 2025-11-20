@@ -1,10 +1,10 @@
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Layout } from "@/components/Layout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Upload as UploadIcon, Camera, Plane } from "lucide-react";
+import { Upload as UploadIcon, Camera, Plane, Video } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -16,6 +16,119 @@ const Upload = () => {
   const [droneLoading, setDroneLoading] = useState(false);
   const [spotCheckPreview, setSpotCheckPreview] = useState<string | null>(null);
   const [dronePreview, setDronePreview] = useState<string | null>(null);
+  
+  // Live Scan state
+  const [liveScanActive, setLiveScanActive] = useState(false);
+  const [liveScanLoading, setLiveScanLoading] = useState(false);
+  const [cameraError, setCameraError] = useState<string | null>(null);
+  const videoRef = useRef<HTMLVideoElement | null>(null);
+  const streamRef = useRef<MediaStream | null>(null);
+
+  // Live Scan functions
+  const startCamera = async () => {
+    try {
+      setCameraError(null);
+      const stream = await navigator.mediaDevices.getUserMedia({ 
+        video: { facingMode: 'environment' } 
+      });
+      streamRef.current = stream;
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream;
+      }
+      setLiveScanActive(true);
+      toast.success("Camera access granted");
+    } catch (error) {
+      console.error('Camera access error:', error);
+      setCameraError("Camera access denied. Please enable camera permissions in your browser settings.");
+      toast.error("Failed to access camera");
+    }
+  };
+
+  const stopCamera = () => {
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach(track => track.stop());
+      streamRef.current = null;
+    }
+    if (videoRef.current) {
+      videoRef.current.srcObject = null;
+    }
+    setLiveScanActive(false);
+  };
+
+  const captureFrame = async () => {
+    if (!videoRef.current) return;
+
+    setLiveScanLoading(true);
+    try {
+      // Create canvas to capture frame
+      const canvas = document.createElement('canvas');
+      canvas.width = videoRef.current.videoWidth;
+      canvas.height = videoRef.current.videoHeight;
+      const ctx = canvas.getContext('2d');
+      if (!ctx) throw new Error('Failed to get canvas context');
+      
+      ctx.drawImage(videoRef.current, 0, 0);
+      
+      // Convert canvas to blob
+      const blob = await new Promise<Blob>((resolve, reject) => {
+        canvas.toBlob((b) => {
+          if (b) resolve(b);
+          else reject(new Error('Failed to capture frame'));
+        }, 'image/jpeg', 0.95);
+      });
+
+      // Create file from blob
+      const file = new File([blob], `live-scan-${Date.now()}.jpg`, { type: 'image/jpeg' });
+
+      // Upload to storage
+      const fileExt = 'jpg';
+      const fileName = `${Math.random()}.${fileExt}`;
+      const filePath = `${fileName}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from('crop-scans')
+        .upload(filePath, file);
+
+      if (uploadError) {
+        throw new Error(`Upload failed: ${uploadError.message}`);
+      }
+
+      // Get public URL
+      const { data: { publicUrl } } = supabase.storage
+        .from('crop-scans')
+        .getPublicUrl(filePath);
+
+      // Call detection edge function
+      const { data, error } = await supabase.functions.invoke('detect-pest', {
+        body: { 
+          imageUrl: publicUrl,
+          scanType: 'live_scan'
+        }
+      });
+
+      if (error) {
+        throw new Error(error.message);
+      }
+
+      toast.success(`Detection complete! Found ${data.detectionsCount || data.detections?.length || 0} pest(s)`);
+      
+      // Stop camera and redirect
+      stopCamera();
+      navigate(`/farmer/report/${data.reportId}`);
+    } catch (error) {
+      console.error('Error during live scan:', error);
+      toast.error(error instanceof Error ? error.message : 'Failed to analyze frame');
+    } finally {
+      setLiveScanLoading(false);
+    }
+  };
+
+  // Cleanup camera on unmount
+  useEffect(() => {
+    return () => {
+      stopCamera();
+    };
+  }, []);
 
   const handleSpotCheck = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -126,6 +239,65 @@ const Upload = () => {
       <div className="p-8">
         <h1 className="mb-6 text-3xl font-bold text-foreground">Data Collection</h1>
         
+        {/* Live Scan Section */}
+        <Card className="mb-6">
+          <CardHeader>
+            <div className="flex items-center gap-3">
+              <Video className="h-8 w-8 text-primary" />
+              <div>
+                <CardTitle>Live Scan (Real-time Monitoring)</CardTitle>
+                <CardDescription>Use your device camera for instant crop health analysis</CardDescription>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent>
+            {!liveScanActive ? (
+              <div className="flex flex-col items-center justify-center py-8">
+                {cameraError ? (
+                  <div className="text-center mb-4">
+                    <p className="text-destructive mb-4">{cameraError}</p>
+                    <Button onClick={startCamera} variant="outline">
+                      Try Again
+                    </Button>
+                  </div>
+                ) : (
+                  <Button onClick={startCamera} size="lg">
+                    <Camera className="mr-2 h-5 w-5" />
+                    Start Camera
+                  </Button>
+                )}
+              </div>
+            ) : (
+              <div className="space-y-4">
+                <div className="relative aspect-video bg-muted rounded-lg overflow-hidden">
+                  <video
+                    ref={videoRef}
+                    autoPlay
+                    playsInline
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+                <div className="flex gap-2 justify-center">
+                  <Button 
+                    onClick={captureFrame} 
+                    disabled={liveScanLoading}
+                    size="lg"
+                  >
+                    {liveScanLoading ? "Analyzing..." : "Capture Frame"}
+                  </Button>
+                  <Button 
+                    onClick={stopCamera} 
+                    variant="outline"
+                    disabled={liveScanLoading}
+                  >
+                    Stop Camera
+                  </Button>
+                </div>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
         <div className="grid gap-6 lg:grid-cols-2">
           <Card>
             <CardHeader>
