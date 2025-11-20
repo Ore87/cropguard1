@@ -30,6 +30,16 @@ const Upload = () => {
       setCameraError(null);
       console.log('Requesting camera access...');
       
+      // Show video element first
+      setLiveScanActive(true);
+      
+      // Wait for next render cycle to ensure video element is in DOM
+      await new Promise(resolve => setTimeout(resolve, 100));
+      
+      if (!videoRef.current) {
+        throw new Error('Video element not available after render');
+      }
+      
       const stream = await navigator.mediaDevices.getUserMedia({ 
         video: { 
           facingMode: 'environment',
@@ -41,13 +51,9 @@ const Upload = () => {
       console.log('Camera access granted, stream obtained');
       streamRef.current = stream;
       
-      if (!videoRef.current) {
-        throw new Error('Video element not available');
-      }
-      
       const videoElement = videoRef.current;
       
-      // Set srcObject first
+      // Set srcObject
       videoElement.srcObject = stream;
       console.log('Stream assigned to video element');
       
@@ -72,10 +78,10 @@ const Upload = () => {
       await videoElement.play();
       console.log('Video playing successfully');
       
-      // Wait a bit for the first frame to render
+      // Wait for first frame
       await new Promise(resolve => setTimeout(resolve, 500));
       
-      // Verify video is actually playing
+      // Verify video is ready
       if (videoElement.videoWidth === 0 || videoElement.videoHeight === 0) {
         throw new Error('Video dimensions are invalid');
       }
@@ -85,12 +91,12 @@ const Upload = () => {
         height: videoElement.videoHeight
       });
       
-      setLiveScanActive(true);
       toast.success("Camera ready");
     } catch (error) {
       console.error('Camera initialization error:', error);
       
-      // Clean up stream on error
+      // Clean up on error
+      setLiveScanActive(false);
       if (streamRef.current) {
         streamRef.current.getTracks().forEach(track => track.stop());
         streamRef.current = null;
