@@ -63,6 +63,31 @@ const MarketTrends = () => {
       name: "Cassava",
       data: generatePriceData(400, 30),
       color: "#22c55e"
+    },
+    {
+      name: "Yam",
+      data: generatePriceData(650, 30),
+      color: "#22c55e"
+    },
+    {
+      name: "Sorghum",
+      data: generatePriceData(720, 30),
+      color: "#22c55e"
+    },
+    {
+      name: "Millet",
+      data: generatePriceData(680, 30),
+      color: "#22c55e"
+    },
+    {
+      name: "Cowpea (Beans)",
+      data: generatePriceData(950, 30),
+      color: "#22c55e"
+    },
+    {
+      name: "Groundnut",
+      data: generatePriceData(1100, 30),
+      color: "#22c55e"
     }
   ], []);
 
