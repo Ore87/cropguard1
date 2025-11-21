@@ -24,10 +24,10 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
     { to: "/dashboard", icon: LayoutDashboard, label: "Dashboard" },
     { to: "/sensors", icon: Thermometer, label: "Sensor Data" },
     { to: "/weather", icon: CloudSun, label: "Weather Forecast" },
-    { to: "/market-trends", icon: TrendingUp, label: "Market Trends" },
     { to: "/upload", icon: Upload, label: "Data Collection" },
     { to: "/analysis", icon: FileSearch, label: "AI Analysis" },
     { to: "/alerts", icon: Bell, label: "Alerts" },
+    { to: "/market-trends", icon: TrendingUp, label: "Market Trends" },
     { to: "/profile", icon: User, label: "Profile" },
   ];
 
