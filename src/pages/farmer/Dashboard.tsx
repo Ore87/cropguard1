@@ -4,6 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Droplets, Thermometer, Wind, Sun, AlertTriangle } from "lucide-react";
+import { WeatherCard } from "@/components/WeatherCard";
 
 const Dashboard = () => {
   const { user } = useAuth();
@@ -100,6 +101,8 @@ const Dashboard = () => {
         </div>
 
         <div className="mt-8 grid gap-6 lg:grid-cols-2">
+          <WeatherCard />
+          
           <Card>
             <CardHeader>
               <CardTitle>Quick Actions</CardTitle>
