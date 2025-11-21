@@ -6,6 +6,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Plus } from "lucide-react";
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -40,6 +41,7 @@ const MarketTrends = () => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [selectedCrop, setSelectedCrop] = useState<string>("");
   const [price, setPrice] = useState<string>("");
+  const [viewMode, setViewMode] = useState<"simulated" | "community">("simulated");
   const queryClient = useQueryClient();
 
   // Fetch market price submissions for the last 30 days
@@ -118,8 +120,39 @@ const MarketTrends = () => {
     submitPriceMutation.mutate({ crop: selectedCrop, priceValue });
   };
 
+  // Generate simulated data for demo view
+  const generateSimulatedData = (cropName: string): PriceDataPoint[] => {
+    const cropBasePrice: { [key: string]: number } = {
+      "Maize": 450,
+      "Rice (Local)": 800,
+      "Cassava": 250,
+      "Yam": 600,
+      "Sorghum": 400,
+      "Millet": 420,
+      "Cowpea (Beans)": 950,
+      "Groundnut": 1100
+    };
+
+    const basePrice = cropBasePrice[cropName] || 500;
+    const data: PriceDataPoint[] = [];
+
+    for (let i = 29; i >= 0; i--) {
+      const date = subDays(new Date(), i);
+      const variation = (Math.random() - 0.5) * 100;
+      const trendFactor = (29 - i) * 2;
+      const price = basePrice + variation + trendFactor;
+      
+      data.push({
+        date: format(date, "MMM d"),
+        price: Math.round(price * 100) / 100,
+      });
+    }
+
+    return data;
+  };
+
   // Process submissions into chart data by crop
-  const processChartData = (cropName: string): PriceDataPoint[] => {
+  const processCommunityData = (cropName: string): PriceDataPoint[] => {
     const cropSubmissions = submissions.filter(s => s.crop_name === cropName);
     
     // Group by date and calculate daily averages
@@ -146,22 +179,36 @@ const MarketTrends = () => {
     return chartData;
   };
 
+  // Get chart data based on current view mode
+  const getChartData = (cropName: string): PriceDataPoint[] => {
+    if (viewMode === "simulated") {
+      return generateSimulatedData(cropName);
+    } else {
+      return processCommunityData(cropName);
+    }
+  };
+
   return (
     <Layout>
       <div className="p-8">
         <div className="mb-8">
-          <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center justify-between mb-6">
             <div>
               <h1 className="mb-2 text-3xl font-bold text-foreground">Regional Crop Price Trends (30-Day)</h1>
-              <p className="text-muted-foreground">Community-sourced market data for key crops in your region</p>
+              <p className="text-muted-foreground">
+                {viewMode === "simulated" 
+                  ? "Realistic simulated data showing typical market price trends"
+                  : "Community-sourced market data for key crops in your region"}
+              </p>
             </div>
-            <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-              <DialogTrigger asChild>
-                <Button className="gap-2">
-                  <Plus className="h-4 w-4" />
-                  Submit Today's Price
-                </Button>
-              </DialogTrigger>
+            {viewMode === "community" && (
+              <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+                <DialogTrigger asChild>
+                  <Button className="gap-2">
+                    <Plus className="h-4 w-4" />
+                    Submit Today's Price
+                  </Button>
+                </DialogTrigger>
               <DialogContent>
                 <DialogHeader>
                   <DialogTitle>Submit Crop Price</DialogTitle>
@@ -203,12 +250,20 @@ const MarketTrends = () => {
                 </form>
               </DialogContent>
             </Dialog>
+            )}
           </div>
+
+          <Tabs value={viewMode} onValueChange={(value) => setViewMode(value as "simulated" | "community")} className="w-full max-w-md">
+            <TabsList className="grid w-full grid-cols-2">
+              <TabsTrigger value="simulated">Simulated Data (Demo)</TabsTrigger>
+              <TabsTrigger value="community">Community Data (Live)</TabsTrigger>
+            </TabsList>
+          </Tabs>
         </div>
 
         <div className="space-y-8">
           {CROPS.map((cropName) => {
-            const chartData = processChartData(cropName);
+            const chartData = getChartData(cropName);
             const hasData = chartData.length > 0;
 
             return (
@@ -260,9 +315,11 @@ const MarketTrends = () => {
                       <p>No data available yet. Be the first to contribute!</p>
                     </div>
                   )}
-                  <p className="mt-4 text-sm text-muted-foreground text-center">
-                    Charts show average daily prices submitted by the community. Contribute today's price to see data.
-                  </p>
+                  {viewMode === "community" && (
+                    <p className="mt-4 text-sm text-muted-foreground text-center">
+                      Charts show average daily prices submitted by the community. Contribute today's price to see data.
+                    </p>
+                  )}
                 </CardContent>
               </Card>
             );
