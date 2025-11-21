@@ -95,6 +95,9 @@ serve(async (req) => {
     } else if (fileExtension === 'mov') {
       mimeType = 'video/quicktime';
       fileName = 'video.mov';
+    } else if (fileExtension === 'webm') {
+      mimeType = 'video/webm';
+      fileName = 'video.webm';
     } else if (fileExtension === 'png') {
       mimeType = 'image/png';
       fileName = 'image.png';
