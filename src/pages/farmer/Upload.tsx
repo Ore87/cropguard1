@@ -22,10 +22,12 @@ const Upload = () => {
   const [liveScanLoading, setLiveScanLoading] = useState(false);
   const [cameraError, setCameraError] = useState<string | null>(null);
   const [isRecording, setIsRecording] = useState(false);
+  const [recordingDuration, setRecordingDuration] = useState(0);
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const recordedChunksRef = useRef<Blob[]>([]);
+  const recordingTimerRef = useRef<number | null>(null);
 
   // Live Scan functions
   const startCamera = async () => {
@@ -200,6 +202,7 @@ const Upload = () => {
 
     try {
       recordedChunksRef.current = [];
+      setRecordingDuration(0);
       
       const mediaRecorder = new MediaRecorder(streamRef.current, {
         mimeType: 'video/webm;codecs=vp8,opus'
@@ -212,12 +215,22 @@ const Upload = () => {
       };
       
       mediaRecorder.onstop = async () => {
+        if (recordingTimerRef.current) {
+          clearInterval(recordingTimerRef.current);
+          recordingTimerRef.current = null;
+        }
         await uploadRecordedVideo();
       };
       
       mediaRecorder.start();
       mediaRecorderRef.current = mediaRecorder;
       setIsRecording(true);
+      
+      // Start timer
+      recordingTimerRef.current = window.setInterval(() => {
+        setRecordingDuration(prev => prev + 1);
+      }, 1000);
+      
       toast.success("Recording started");
     } catch (error) {
       console.error('Error starting recording:', error);
@@ -227,6 +240,10 @@ const Upload = () => {
 
   const stopRecording = () => {
     if (mediaRecorderRef.current && isRecording) {
+      if (recordingTimerRef.current) {
+        clearInterval(recordingTimerRef.current);
+        recordingTimerRef.current = null;
+      }
       mediaRecorderRef.current.stop();
       setIsRecording(false);
       setLiveScanLoading(true);
@@ -286,6 +303,9 @@ const Upload = () => {
   // Cleanup camera on unmount
   useEffect(() => {
     return () => {
+      if (recordingTimerRef.current) {
+        clearInterval(recordingTimerRef.current);
+      }
       stopCamera();
     };
   }, []);
@@ -439,7 +459,9 @@ const Upload = () => {
                   {isRecording && (
                     <div className="absolute top-4 left-4 flex items-center gap-2 bg-destructive text-destructive-foreground px-3 py-1 rounded-full">
                       <div className="w-3 h-3 bg-white rounded-full animate-pulse" />
-                      <span className="text-sm font-medium">Recording</span>
+                      <span className="text-sm font-medium">
+                        Recording {Math.floor(recordingDuration / 60)}:{(recordingDuration % 60).toString().padStart(2, '0')}
+                      </span>
                     </div>
                   )}
                 </div>
