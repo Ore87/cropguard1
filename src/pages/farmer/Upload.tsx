@@ -21,8 +21,11 @@ const Upload = () => {
   const [liveScanActive, setLiveScanActive] = useState(false);
   const [liveScanLoading, setLiveScanLoading] = useState(false);
   const [cameraError, setCameraError] = useState<string | null>(null);
+  const [isRecording, setIsRecording] = useState(false);
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const recordedChunksRef = useRef<Blob[]>([]);
 
   // Live Scan functions
   const startCamera = async () => {
@@ -192,6 +195,94 @@ const Upload = () => {
     }
   };
 
+  const startRecording = () => {
+    if (!streamRef.current) return;
+
+    try {
+      recordedChunksRef.current = [];
+      
+      const mediaRecorder = new MediaRecorder(streamRef.current, {
+        mimeType: 'video/webm;codecs=vp8,opus'
+      });
+      
+      mediaRecorder.ondataavailable = (event) => {
+        if (event.data.size > 0) {
+          recordedChunksRef.current.push(event.data);
+        }
+      };
+      
+      mediaRecorder.onstop = async () => {
+        await uploadRecordedVideo();
+      };
+      
+      mediaRecorder.start();
+      mediaRecorderRef.current = mediaRecorder;
+      setIsRecording(true);
+      toast.success("Recording started");
+    } catch (error) {
+      console.error('Error starting recording:', error);
+      toast.error("Failed to start recording");
+    }
+  };
+
+  const stopRecording = () => {
+    if (mediaRecorderRef.current && isRecording) {
+      mediaRecorderRef.current.stop();
+      setIsRecording(false);
+      setLiveScanLoading(true);
+      toast.info("Processing video...");
+    }
+  };
+
+  const uploadRecordedVideo = async () => {
+    try {
+      // Create video blob
+      const videoBlob = new Blob(recordedChunksRef.current, { type: 'video/webm' });
+      const videoFile = new File([videoBlob], `live-scan-${Date.now()}.webm`, { type: 'video/webm' });
+
+      // Upload to storage
+      const fileName = `${Math.random()}.webm`;
+      const filePath = `${fileName}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from('crop-scans')
+        .upload(filePath, videoFile);
+
+      if (uploadError) {
+        throw new Error(`Upload failed: ${uploadError.message}`);
+      }
+
+      // Get public URL
+      const { data: { publicUrl } } = supabase.storage
+        .from('crop-scans')
+        .getPublicUrl(filePath);
+
+      // Call detection edge function
+      const { data, error } = await supabase.functions.invoke('detect-pest', {
+        body: { 
+          imageUrl: publicUrl,
+          scanType: 'live_scan'
+        }
+      });
+
+      if (error) {
+        throw new Error(error.message);
+      }
+
+      toast.success(`Detection complete! Found ${data.detectionsCount || data.detections?.length || 0} pest(s)`);
+      
+      // Stop camera and redirect
+      stopCamera();
+      navigate(`/farmer/report/${data.reportId}`);
+    } catch (error) {
+      console.error('Error uploading recorded video:', error);
+      toast.error(error instanceof Error ? error.message : 'Failed to analyze video');
+    } finally {
+      setLiveScanLoading(false);
+      recordedChunksRef.current = [];
+    }
+  };
+
   // Cleanup camera on unmount
   useEffect(() => {
     return () => {
@@ -345,19 +436,46 @@ const Upload = () => {
                     muted
                     className="w-full h-full object-cover"
                   />
+                  {isRecording && (
+                    <div className="absolute top-4 left-4 flex items-center gap-2 bg-destructive text-destructive-foreground px-3 py-1 rounded-full">
+                      <div className="w-3 h-3 bg-white rounded-full animate-pulse" />
+                      <span className="text-sm font-medium">Recording</span>
+                    </div>
+                  )}
                 </div>
-                <div className="flex gap-2 justify-center">
+                <div className="flex gap-2 justify-center flex-wrap">
                   <Button 
                     onClick={captureFrame} 
-                    disabled={liveScanLoading}
+                    disabled={liveScanLoading || isRecording}
                     size="lg"
+                    variant="outline"
                   >
+                    <Camera className="mr-2 h-4 w-4" />
                     {liveScanLoading ? "Analyzing..." : "Capture Frame"}
                   </Button>
+                  {!isRecording ? (
+                    <Button 
+                      onClick={startRecording} 
+                      disabled={liveScanLoading}
+                      size="lg"
+                    >
+                      <Video className="mr-2 h-4 w-4" />
+                      Start Recording
+                    </Button>
+                  ) : (
+                    <Button 
+                      onClick={stopRecording} 
+                      disabled={liveScanLoading}
+                      size="lg"
+                      variant="destructive"
+                    >
+                      Stop Recording
+                    </Button>
+                  )}
                   <Button 
                     onClick={stopCamera} 
                     variant="outline"
-                    disabled={liveScanLoading}
+                    disabled={liveScanLoading || isRecording}
                   >
                     Stop Camera
                   </Button>
