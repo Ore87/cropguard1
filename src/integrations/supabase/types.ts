@@ -135,6 +135,30 @@ export type Database = {
         }
         Relationships: []
       }
+      market_price_submissions: {
+        Row: {
+          created_at: string
+          crop_name: string
+          id: string
+          price_per_kg: number
+          submitted_by: string
+        }
+        Insert: {
+          created_at?: string
+          crop_name: string
+          id?: string
+          price_per_kg: number
+          submitted_by: string
+        }
+        Update: {
+          created_at?: string
+          crop_name?: string
+          id?: string
+          price_per_kg?: number
+          submitted_by?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           created_at: string
