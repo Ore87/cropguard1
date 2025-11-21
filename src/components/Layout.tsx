@@ -11,7 +11,8 @@ import {
   LogOut,
   Users,
   Tractor,
-  BarChart3
+  BarChart3,
+  CloudSun
 } from "lucide-react";
 
 export const Layout = ({ children }: { children: React.ReactNode }) => {
@@ -21,6 +22,7 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
   const farmerLinks = [
     { to: "/dashboard", icon: LayoutDashboard, label: "Dashboard" },
     { to: "/sensors", icon: Thermometer, label: "Sensor Data" },
+    { to: "/weather", icon: CloudSun, label: "Weather Forecast" },
     { to: "/upload", icon: Upload, label: "Data Collection" },
     { to: "/analysis", icon: FileSearch, label: "AI Analysis" },
     { to: "/alerts", icon: Bell, label: "Alerts" },
