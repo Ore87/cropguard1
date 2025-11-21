@@ -9,6 +9,7 @@ import Landing from "./pages/Landing";
 import Auth from "./pages/Auth";
 import Dashboard from "./pages/farmer/Dashboard";
 import Sensors from "./pages/farmer/Sensors";
+import Weather from "./pages/farmer/Weather";
 import Upload from "./pages/farmer/Upload";
 import Analysis from "./pages/farmer/Analysis";
 import Alerts from "./pages/farmer/Alerts";
@@ -34,6 +35,7 @@ const App = () => (
             <Route path="/auth" element={<Auth />} />
             <Route path="/dashboard" element={<ProtectedRoute allowedRoles={["farmer"]}><Dashboard /></ProtectedRoute>} />
             <Route path="/sensors" element={<ProtectedRoute allowedRoles={["farmer"]}><Sensors /></ProtectedRoute>} />
+            <Route path="/weather" element={<ProtectedRoute allowedRoles={["farmer"]}><Weather /></ProtectedRoute>} />
             <Route path="/upload" element={<ProtectedRoute allowedRoles={["farmer"]}><Upload /></ProtectedRoute>} />
             <Route path="/analysis" element={<ProtectedRoute allowedRoles={["farmer"]}><Analysis /></ProtectedRoute>} />
             <Route path="/farmer/report/:reportId" element={<ProtectedRoute allowedRoles={["farmer"]}><ReportDetails /></ProtectedRoute>} />
