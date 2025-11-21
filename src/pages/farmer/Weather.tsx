@@ -3,6 +3,8 @@ import { Layout } from "@/components/Layout";
 import { Card, CardContent } from "@/components/ui/card";
 import { Loader2, AlertCircle } from "lucide-react";
 import { getWeatherInfo, getDayName } from "@/utils/weather";
+import { useState, useEffect } from "react";
+import { format } from "date-fns";
 
 interface WeatherData {
   current: {
@@ -29,10 +31,20 @@ const fetchWeather = async (): Promise<WeatherData> => {
 };
 
 const Weather = () => {
+  const [currentTime, setCurrentTime] = useState(new Date());
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentTime(new Date());
+    }, 60000); // Update every minute
+
+    return () => clearInterval(interval);
+  }, []);
+
   const { data, isLoading, error } = useQuery({
     queryKey: ["weather"],
     queryFn: fetchWeather,
-    refetchInterval: 30 * 60 * 1000, // Refetch every 30 minutes
+    refetchInterval: 15 * 60 * 1000, // Refetch every 15 minutes
   });
 
   if (isLoading) {
@@ -73,8 +85,13 @@ const Weather = () => {
   return (
     <Layout>
       <div className="p-8">
-        <h1 className="mb-6 text-3xl font-bold text-foreground">Weather Forecast</h1>
-        <p className="mb-8 text-muted-foreground">Ogbomoso, Nigeria</p>
+        <div className="mb-8">
+          <h1 className="mb-2 text-3xl font-bold text-foreground">Weather Forecast</h1>
+          <p className="text-muted-foreground">Ogbomoso, Nigeria</p>
+          <p className="text-sm text-muted-foreground mt-1">
+            {format(currentTime, "EEEE, MMMM d, h:mm a")}
+          </p>
+        </div>
 
         {/* Current Weather - Large Display */}
         <Card className="mb-8">
