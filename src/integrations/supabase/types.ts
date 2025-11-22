@@ -22,6 +22,7 @@ export type Database = {
           id: string
           is_read: boolean
           message: string
+          priority: number | null
           severity: string
           type: string | null
         }
@@ -32,6 +33,7 @@ export type Database = {
           id?: string
           is_read?: boolean
           message: string
+          priority?: number | null
           severity: string
           type?: string | null
         }
@@ -42,6 +44,7 @@ export type Database = {
           id?: string
           is_read?: boolean
           message?: string
+          priority?: number | null
           severity?: string
           type?: string | null
         }

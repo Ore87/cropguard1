@@ -5,6 +5,9 @@ import { Loader2, AlertCircle } from "lucide-react";
 import { getWeatherInfo, getDayName } from "@/utils/weather";
 import { useState, useEffect } from "react";
 import { format } from "date-fns";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
+import { checkAndCreateWeatherAlerts } from "@/utils/weatherAlerts";
 
 interface WeatherData {
   current: {
@@ -31,7 +34,27 @@ const fetchWeather = async (): Promise<WeatherData> => {
 };
 
 const Weather = () => {
+  const { user } = useAuth();
   const [currentTime, setCurrentTime] = useState(new Date());
+  const [farmId, setFarmId] = useState<string | null>(null);
+
+  // Fetch farm ID
+  useEffect(() => {
+    const fetchFarm = async () => {
+      if (!user) return;
+      
+      const { data: farms } = await supabase
+        .from("farms")
+        .select("id")
+        .eq("farmer_id", user.id)
+        .limit(1)
+        .single();
+
+      if (farms) setFarmId(farms.id);
+    };
+
+    fetchFarm();
+  }, [user]);
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -46,6 +69,18 @@ const Weather = () => {
     queryFn: fetchWeather,
     refetchInterval: 15 * 60 * 1000, // Refetch every 15 minutes
   });
+
+  // Check and create weather alerts when data changes
+  useEffect(() => {
+    if (data && farmId) {
+      checkAndCreateWeatherAlerts(
+        farmId,
+        data.current.temperature_2m,
+        data.current.relative_humidity_2m,
+        data.current.weather_code
+      );
+    }
+  }, [data, farmId]);
 
   if (isLoading) {
     return (

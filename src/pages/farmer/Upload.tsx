@@ -35,6 +35,7 @@ const createAlertIfNeeded = async (reportId: string, scanType: string) => {
           severity: report.infestation_level === 'HIGH' ? 'critical' : 'high',
           message: `A ${report.infestation_level} infestation level was found in your recent ${scanTypeLabel}. Check report for details.`,
           type: 'pest',
+          priority: 1,
           is_read: false
         });
 
