@@ -7,6 +7,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 import { Play, Square } from "lucide-react";
 import { toast } from "sonner";
+import { checkAndCreateSensorAlerts } from "@/utils/sensorAlerts";
 
 interface SensorReading {
   recorded_at: string;
@@ -120,6 +121,9 @@ const Sensors = () => {
 
       setCurrentValues(newData);
       setSensorData(prev => [...prev.slice(-19), data]);
+
+      // Check and create alerts based on sensor values
+      await checkAndCreateSensorAlerts(farmId, newData);
     } catch (error) {
       console.error("Error simulating data:", error);
     }

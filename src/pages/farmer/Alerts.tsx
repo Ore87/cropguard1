@@ -40,11 +40,12 @@ const Alerts = () => {
 
       const farmIds = farms.map(f => f.id);
 
-      // Then fetch alerts for those farms
+      // Then fetch alerts for those farms, ordered by priority then created_at
       const { data, error } = await supabase
         .from('alerts')
         .select('*')
         .in('farm_id', farmIds)
+        .order('priority', { ascending: true })
         .order('created_at', { ascending: false });
 
       if (error) throw error;
