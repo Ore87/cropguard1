@@ -23,6 +23,7 @@ export type Database = {
           is_read: boolean
           message: string
           severity: string
+          type: string | null
         }
         Insert: {
           alert_type: string
@@ -32,6 +33,7 @@ export type Database = {
           is_read?: boolean
           message: string
           severity: string
+          type?: string | null
         }
         Update: {
           alert_type?: string
@@ -41,6 +43,7 @@ export type Database = {
           is_read?: boolean
           message?: string
           severity?: string
+          type?: string | null
         }
         Relationships: [
           {

@@ -8,6 +8,45 @@ import { Upload as UploadIcon, Camera, Plane, Video } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 
+// Helper function to create alerts for high/medium infestations
+const createAlertIfNeeded = async (reportId: string, scanType: string) => {
+  try {
+    // Get the report details
+    const { data: report, error: reportError } = await supabase
+      .from('analysis_reports')
+      .select('infestation_level, farm_id')
+      .eq('id', reportId)
+      .single();
+
+    if (reportError || !report) {
+      console.error('Error fetching report:', reportError);
+      return;
+    }
+
+    // Only create alert for HIGH or MEDIUM infestations
+    if (report.infestation_level === 'HIGH' || report.infestation_level === 'MEDIUM') {
+      const scanTypeLabel = scanType === 'spot_check' ? 'Spot Check' : scanType === 'drone_flight' ? 'Drone Scan' : 'Live Scan';
+      
+      const { error: alertError } = await supabase
+        .from('alerts')
+        .insert({
+          farm_id: report.farm_id,
+          alert_type: 'Pest Detection Alert',
+          severity: report.infestation_level === 'HIGH' ? 'critical' : 'high',
+          message: `A ${report.infestation_level} infestation level was found in your recent ${scanTypeLabel}. Check report for details.`,
+          type: 'pest',
+          is_read: false
+        });
+
+      if (alertError) {
+        console.error('Error creating alert:', alertError);
+      }
+    }
+  } catch (error) {
+    console.error('Error in createAlertIfNeeded:', error);
+  }
+};
+
 const Upload = () => {
   const navigate = useNavigate();
   const [spotCheckFile, setSpotCheckFile] = useState<File | null>(null);
@@ -186,6 +225,9 @@ const Upload = () => {
 
       toast.success(`Detection complete! Found ${data.detectionsCount || data.detections?.length || 0} pest(s)`);
       
+      // Create alert if high/medium infestation detected
+      await createAlertIfNeeded(data.reportId, 'live_scan');
+      
       // Stop camera and redirect
       stopCamera();
       navigate(`/farmer/report/${data.reportId}`);
@@ -288,6 +330,9 @@ const Upload = () => {
 
       toast.success(`Detection complete! Found ${data.detectionsCount || data.detections?.length || 0} pest(s)`);
       
+      // Create alert if high/medium infestation detected
+      await createAlertIfNeeded(data.reportId, 'live_scan');
+      
       // Stop camera and redirect
       stopCamera();
       navigate(`/farmer/report/${data.reportId}`);
@@ -352,6 +397,9 @@ const Upload = () => {
 
       toast.success(`Detection complete! Found ${data.detectionsCount || data.detections?.length || 0} pest(s)`);
       
+      // Create alert if high/medium infestation detected
+      await createAlertIfNeeded(data.reportId, 'spot_check');
+      
       // Redirect to report details
       navigate(`/farmer/report/${data.reportId}`);
     } catch (error) {
@@ -403,6 +451,9 @@ const Upload = () => {
       }
 
       toast.success(`Detection complete! Found ${data.detectionsCount || data.detections?.length || 0} pest(s)`);
+      
+      // Create alert if high/medium infestation detected
+      await createAlertIfNeeded(data.reportId, 'drone_flight');
       
       // Redirect to report details
       navigate(`/farmer/report/${data.reportId}`);
