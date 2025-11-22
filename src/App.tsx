@@ -17,6 +17,7 @@ import Analysis from "./pages/farmer/Analysis";
 import Alerts from "./pages/farmer/Alerts";
 import Profile from "./pages/farmer/Profile";
 import ReportDetails from "./pages/farmer/ReportDetails";
+import FarmAdvisor from "./pages/farmer/FarmAdvisor";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import FarmManagement from "./pages/admin/FarmManagement";
 import UserManagement from "./pages/admin/UserManagement";
@@ -44,6 +45,7 @@ const App = () => (
             <Route path="/analysis" element={<ProtectedRoute allowedRoles={["farmer"]}><Analysis /></ProtectedRoute>} />
             <Route path="/farmer/report/:reportId" element={<ProtectedRoute allowedRoles={["farmer"]}><ReportDetails /></ProtectedRoute>} />
             <Route path="/alerts" element={<ProtectedRoute allowedRoles={["farmer"]}><Alerts /></ProtectedRoute>} />
+            <Route path="/farm-advisor" element={<ProtectedRoute allowedRoles={["farmer"]}><FarmAdvisor /></ProtectedRoute>} />
             <Route path="/profile" element={<ProtectedRoute allowedRoles={["farmer"]}><Profile /></ProtectedRoute>} />
             <Route path="/admin/dashboard" element={<ProtectedRoute allowedRoles={["agronomist"]}><AdminDashboard /></ProtectedRoute>} />
             <Route path="/admin/farms" element={<ProtectedRoute allowedRoles={["agronomist"]}><FarmManagement /></ProtectedRoute>} />
