@@ -54,6 +54,31 @@ const Alerts = () => {
     enabled: !!user,
   });
 
+  // Real-time subscription for new alerts
+  useEffect(() => {
+    if (!user) return;
+
+    const channel = supabase
+      .channel('alerts-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'alerts'
+        },
+        () => {
+          // Refetch alerts whenever there's a change
+          queryClient.invalidateQueries({ queryKey: ['alerts', user.id] });
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [user, queryClient]);
+
   const markAsRead = async (alertId: string) => {
     try {
       const { error } = await supabase
