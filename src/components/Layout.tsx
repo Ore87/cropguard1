@@ -14,7 +14,8 @@ import {
   BarChart3,
   CloudSun,
   TrendingUp,
-  UserCog
+  UserCog,
+  Lightbulb
 } from "lucide-react";
 
 export const Layout = ({ children }: { children: React.ReactNode }) => {
@@ -29,6 +30,7 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
     { to: "/analysis", icon: FileSearch, label: "AI Analysis" },
     { to: "/alerts", icon: Bell, label: "Alerts" },
     { to: "/market-trends", icon: TrendingUp, label: "Market Trends" },
+    { to: "/farm-advisor", icon: Lightbulb, label: "Farm Advisor" },
     { to: "/expert-directory", icon: UserCog, label: "Expert Directory" },
     { to: "/profile", icon: User, label: "Profile" },
   ];
