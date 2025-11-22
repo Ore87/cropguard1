@@ -7,6 +7,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Bell, Check, AlertCircle } from "lucide-react";
 import { toast } from "sonner";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 
 interface Alert {
   id: string;
@@ -15,72 +16,42 @@ interface Alert {
   message: string;
   is_read: boolean;
   created_at: string;
+  type: string;
 }
-
-// Demo data for demonstration purposes
-const demoAlerts: Alert[] = [
-  {
-    id: "1",
-    alert_type: "Pest Detection Alert",
-    severity: "critical",
-    message: "High Fall Armyworm (FAW) infestation detected in Field A via drone scan. Immediate intervention recommended.",
-    is_read: false,
-    created_at: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(), // 2 hours ago
-  },
-  {
-    id: "2",
-    alert_type: "Soil Moisture Warning",
-    severity: "high",
-    message: "Low soil moisture levels detected in Sector C. Irrigation required within 24 hours.",
-    is_read: false,
-    created_at: new Date(Date.now() - 5 * 60 * 60 * 1000).toISOString(), // 5 hours ago
-  },
-  {
-    id: "3",
-    alert_type: "Weather Forecast",
-    severity: "medium",
-    message: "Heavy rainfall forecast for tomorrow. Secure loose equipment and ensure proper drainage.",
-    is_read: true,
-    created_at: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(), // Yesterday
-  },
-  {
-    id: "4",
-    alert_type: "Pest Detection Alert",
-    severity: "high",
-    message: "Moderate aphid population detected in Field B. Consider early treatment to prevent spread.",
-    is_read: true,
-    created_at: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(), // 2 days ago
-  },
-  {
-    id: "5",
-    alert_type: "Temperature Alert",
-    severity: "medium",
-    message: "High temperature warning: 38°C expected today. Monitor crop stress levels closely.",
-    is_read: true,
-    created_at: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(), // 3 days ago
-  },
-  {
-    id: "6",
-    alert_type: "System Notification",
-    severity: "low",
-    message: "Weekly sensor maintenance scheduled for next Monday at 9:00 AM.",
-    is_read: true,
-    created_at: new Date(Date.now() - 4 * 24 * 60 * 60 * 1000).toISOString(), // 4 days ago
-  },
-  {
-    id: "7",
-    alert_type: "Humidity Alert",
-    severity: "medium",
-    message: "High humidity levels in greenhouse (85%). Increase ventilation to prevent fungal growth.",
-    is_read: true,
-    created_at: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(), // 5 days ago
-  },
-];
 
 const Alerts = () => {
   const { user } = useAuth();
-  const [alerts, setAlerts] = useState<Alert[]>(demoAlerts);
-  const [loading, setLoading] = useState(false);
+  const queryClient = useQueryClient();
+
+  // Fetch alerts from database
+  const { data: alerts = [], isLoading } = useQuery({
+    queryKey: ['alerts', user?.id],
+    queryFn: async () => {
+      if (!user) return [];
+      
+      // First, get user's farms
+      const { data: farms, error: farmsError } = await supabase
+        .from('farms')
+        .select('id')
+        .eq('farmer_id', user.id);
+
+      if (farmsError) throw farmsError;
+      if (!farms || farms.length === 0) return [];
+
+      const farmIds = farms.map(f => f.id);
+
+      // Then fetch alerts for those farms
+      const { data, error } = await supabase
+        .from('alerts')
+        .select('*')
+        .in('farm_id', farmIds)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      return data as Alert[];
+    },
+    enabled: !!user,
+  });
 
   const markAsRead = async (alertId: string) => {
     try {
@@ -91,11 +62,8 @@ const Alerts = () => {
 
       if (error) throw error;
 
-      setAlerts(prev =>
-        prev.map(alert =>
-          alert.id === alertId ? { ...alert, is_read: true } : alert
-        )
-      );
+      // Invalidate query to refetch alerts
+      queryClient.invalidateQueries({ queryKey: ['alerts', user?.id] });
 
       toast.success("Alert marked as read");
     } catch (error) {
@@ -138,18 +106,18 @@ const Alerts = () => {
     }
   };
 
-  const getAlertIcon = (alertType: string) => {
-    if (alertType.toLowerCase().includes('pest')) {
+  const getAlertIcon = (type: string) => {
+    if (type === 'pest') {
       return <AlertCircle className="h-5 w-5 text-destructive" />;
-    } else if (alertType.toLowerCase().includes('moisture') || alertType.toLowerCase().includes('irrigation')) {
+    } else if (type === 'moisture' || type === 'irrigation') {
       return <AlertCircle className="h-5 w-5 text-orange-500" />;
-    } else if (alertType.toLowerCase().includes('weather') || alertType.toLowerCase().includes('system')) {
+    } else if (type === 'weather' || type === 'system') {
       return <Bell className="h-5 w-5 text-blue-500" />;
     }
     return <AlertCircle className="h-5 w-5" />;
   };
 
-  if (loading) {
+  if (isLoading) {
     return (
       <Layout>
         <div className="flex min-h-screen items-center justify-center">
@@ -187,7 +155,7 @@ const Alerts = () => {
                 <CardHeader>
                   <div className="flex items-start justify-between gap-4">
                     <div className="flex items-center gap-3 flex-1">
-                      {getAlertIcon(alert.alert_type)}
+                      {getAlertIcon(alert.type)}
                       <div className="flex-1">
                         <div className="flex items-center gap-3 mb-2">
                           <CardTitle className="text-lg">{alert.alert_type}</CardTitle>
