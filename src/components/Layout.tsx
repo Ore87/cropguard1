@@ -1,6 +1,7 @@
 import { Link, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
+import { AIChatWidget } from "@/components/AIChatWidget";
 import { 
   LayoutDashboard, 
   Thermometer, 
@@ -78,6 +79,7 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
       </aside>
       <main className="flex-1 overflow-auto">
         {children}
+        <AIChatWidget />
       </main>
     </div>
   );
