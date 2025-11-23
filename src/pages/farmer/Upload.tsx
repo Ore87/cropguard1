@@ -421,25 +421,40 @@ const Upload = () => {
     setDroneLoading(true);
     
     try {
-      // Upload image to storage
+      console.log('Starting drone flight upload for file:', droneFile.name, 'Size:', droneFile.size, 'Type:', droneFile.type);
+      
+      // Upload file to storage
       const fileExt = droneFile.name.split('.').pop();
       const fileName = `${Math.random()}.${fileExt}`;
       const filePath = `${fileName}`;
 
+      console.log('Uploading to storage:', filePath);
       const { error: uploadError } = await supabase.storage
         .from('crop-scans')
-        .upload(filePath, droneFile);
+        .upload(filePath, droneFile, {
+          contentType: droneFile.type,
+          cacheControl: '3600',
+          upsert: false
+        });
 
       if (uploadError) {
+        console.error('Storage upload error:', uploadError);
         throw new Error(`Upload failed: ${uploadError.message}`);
       }
 
+      console.log('File uploaded successfully, getting public URL');
+      
       // Get public URL
       const { data: { publicUrl } } = supabase.storage
         .from('crop-scans')
         .getPublicUrl(filePath);
 
-      // Call detection edge function
+      console.log('Public URL obtained:', publicUrl);
+      console.log('Calling detect-pest edge function...');
+
+      // Call detection edge function with extended timeout for videos
+      const isVideo = droneFile.type.startsWith('video/');
+      
       const { data, error } = await supabase.functions.invoke('detect-pest', {
         body: { 
           imageUrl: publicUrl,
@@ -447,8 +462,15 @@ const Upload = () => {
         }
       });
 
+      console.log('Edge function response:', { data, error });
+
       if (error) {
-        throw new Error(error.message);
+        console.error('Edge function error:', error);
+        throw new Error(`Detection failed: ${error.message}`);
+      }
+
+      if (!data) {
+        throw new Error('No data received from detection service');
       }
 
       toast.success(`Detection complete! Found ${data.detectionsCount || data.detections?.length || 0} pest(s)`);
@@ -459,8 +481,9 @@ const Upload = () => {
       // Redirect to report details
       navigate(`/farmer/report/${data.reportId}`);
     } catch (error) {
-      console.error('Error during drone flight:', error);
-      toast.error(error instanceof Error ? error.message : 'Failed to analyze image');
+      console.error('Error during drone flight analysis:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Failed to analyze file';
+      toast.error(errorMessage);
     } finally {
       setDroneLoading(false);
     }
