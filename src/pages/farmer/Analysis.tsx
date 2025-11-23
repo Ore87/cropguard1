@@ -29,23 +29,32 @@ const Analysis = () => {
     if (!user) return;
 
     try {
-      const { data: farms } = await supabase
+      const { data: farm, error: farmError } = await supabase
         .from("farms")
         .select("id")
         .eq("farmer_id", user.id)
-        .limit(1)
-        .single();
+        .maybeSingle();
 
-      if (!farms) {
+      if (farmError) {
+        console.error("Error fetching farm:", farmError);
         setLoading(false);
         return;
       }
 
-      const { data } = await supabase
+      if (!farm) {
+        setLoading(false);
+        return;
+      }
+
+      const { data, error: reportsError } = await supabase
         .from("analysis_reports")
         .select("*")
-        .eq("farm_id", farms.id)
+        .eq("farm_id", farm.id)
         .order("analyzed_at", { ascending: false });
+
+      if (reportsError) {
+        console.error("Error fetching reports:", reportsError);
+      }
 
       setReports(data || []);
     } catch (error) {

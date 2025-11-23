@@ -53,18 +53,21 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
-        setSession(session);
-        setUser(session?.user ?? null);
-        
         if (session?.user) {
-          // Check for session timeout on auth state change
-          if (!checkSessionTimeout()) {
-            updateActivity();
-            setTimeout(() => {
-              fetchUserRole(session.user.id);
-            }, 0);
+          // Check for session timeout BEFORE setting state
+          if (checkSessionTimeout()) {
+            // Timeout exceeded - don't set session
+            return;
           }
+          updateActivity();
+          setSession(session);
+          setUser(session.user);
+          setTimeout(() => {
+            fetchUserRole(session.user.id);
+          }, 0);
         } else {
+          setSession(null);
+          setUser(null);
           setUserRole(null);
           setLoading(false);
           localStorage.removeItem(LAST_ACTIVITY_KEY);
@@ -73,14 +76,17 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     );
 
     supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setUser(session?.user ?? null);
       if (session?.user) {
-        // Check for session timeout on mount
-        if (!checkSessionTimeout()) {
-          updateActivity();
-          fetchUserRole(session.user.id);
+        // Check for session timeout BEFORE setting state on mount
+        if (checkSessionTimeout()) {
+          // Timeout exceeded - session is stale, don't use it
+          setLoading(false);
+          return;
         }
+        updateActivity();
+        setSession(session);
+        setUser(session.user);
+        fetchUserRole(session.user.id);
       } else {
         setLoading(false);
       }
