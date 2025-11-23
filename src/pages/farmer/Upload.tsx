@@ -455,6 +455,11 @@ const Upload = () => {
       // Call detection edge function with extended timeout for videos
       const isVideo = droneFile.type.startsWith('video/');
       
+      // Show different messages for video vs image
+      if (isVideo) {
+        toast.info('Processing video... This may take up to 5 minutes for longer videos.');
+      }
+      
       const { data, error } = await supabase.functions.invoke('detect-pest', {
         body: { 
           imageUrl: publicUrl,

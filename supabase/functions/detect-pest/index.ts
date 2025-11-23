@@ -123,7 +123,7 @@ serve(async (req) => {
     // Call the external AI API with extended timeout for videos
     console.log('Sending request to AI API...');
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), isVideo ? 120000 : 60000); // 2 min for video, 1 min for image
+    const timeoutId = setTimeout(() => controller.abort(), isVideo ? 300000 : 90000); // 5 min for video, 1.5 min for image
 
     let detectionResult;
     try {
@@ -154,7 +154,9 @@ serve(async (req) => {
       
       if (fetchError instanceof Error && fetchError.name === 'AbortError') {
         return new Response(
-          JSON.stringify({ error: `Detection timed out. ${isVideo ? 'Video' : 'Image'} processing took too long.` }),
+          JSON.stringify({ 
+            error: `Detection timed out. ${isVideo ? 'Video processing exceeded 5 minutes. Please try with a shorter video or lower resolution.' : 'Image processing took too long. Please try with a smaller image.'}` 
+          }),
           { status: 504, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
       }
