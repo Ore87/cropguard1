@@ -58,9 +58,10 @@ serve(async (req) => {
       );
     }
 
-    // Download the image from Supabase Storage
+    // Download the file from Supabase Storage
     const imagePathMatch = imageUrl.match(/crop-scans\/(.+)$/);
     if (!imagePathMatch) {
+      console.error('Invalid URL format:', imageUrl);
       return new Response(
         JSON.stringify({ error: 'Invalid image URL format' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -68,23 +69,27 @@ serve(async (req) => {
     }
 
     const imagePath = imagePathMatch[1];
+    console.log('Downloading file from storage:', imagePath);
     
     const { data: imageData, error: downloadError } = await supabase.storage
       .from('crop-scans')
       .download(imagePath);
 
     if (downloadError || !imageData) {
-      console.error('Image download error:', downloadError);
+      console.error('File download error:', downloadError);
       return new Response(
-        JSON.stringify({ error: 'Failed to download image' }),
+        JSON.stringify({ error: `Failed to download file: ${downloadError?.message || 'Unknown error'}` }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
+
+    console.log('File downloaded successfully, size:', imageData.size);
 
     // Detect file type and set appropriate MIME type
     const fileExtension = imagePath.split('.').pop()?.toLowerCase();
     let mimeType = 'image/jpeg';
     let fileName = 'file.jpg';
+    const isVideo = ['mp4', 'avi', 'mov', 'webm'].includes(fileExtension || '');
     
     if (fileExtension === 'mp4') {
       mimeType = 'video/mp4';
@@ -106,32 +111,58 @@ serve(async (req) => {
       fileName = 'image.webp';
     }
 
-    console.log('File type detected:', fileExtension, 'MIME type:', mimeType);
+    console.log('File type detected:', fileExtension, 'MIME type:', mimeType, 'Is video:', isVideo);
 
     // Prepare multipart form data with proper file blob
     const formData = new FormData();
     const blob = new Blob([imageData], { type: mimeType });
     formData.append('file', blob, fileName);
 
-    console.log('Calling AI detection API with image size:', imageData.size);
+    console.log('Prepared FormData with file size:', imageData.size, 'bytes');
 
-    // Call the external AI API
-    const aiResponse = await fetch('https://Ore5187-cropguard-ai-backend.hf.space/detect/', {
-      method: 'POST',
-      body: formData,
-    });
+    // Call the external AI API with extended timeout for videos
+    console.log('Sending request to AI API...');
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), isVideo ? 120000 : 60000); // 2 min for video, 1 min for image
 
-    if (!aiResponse.ok) {
-      const errorText = await aiResponse.text();
-      console.error('AI API error:', aiResponse.status, errorText);
-      return new Response(
-        JSON.stringify({ error: `AI detection failed: ${errorText}` }),
-        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
+    let detectionResult;
+    try {
+      const aiResponse = await fetch('https://Ore5187-cropguard-ai-backend.hf.space/detect/', {
+        method: 'POST',
+        body: formData,
+        signal: controller.signal,
+      });
+
+      clearTimeout(timeoutId);
+
+      console.log('AI API response status:', aiResponse.status);
+
+      if (!aiResponse.ok) {
+        const errorText = await aiResponse.text();
+        console.error('AI API error response:', aiResponse.status, errorText);
+        return new Response(
+          JSON.stringify({ error: `AI detection failed (${aiResponse.status}): ${errorText}` }),
+          { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      detectionResult = await aiResponse.json();
+      console.log('Detection result received:', JSON.stringify(detectionResult, null, 2));
+    } catch (fetchError) {
+      clearTimeout(timeoutId);
+      console.error('AI API request failed:', fetchError);
+      
+      if (fetchError instanceof Error && fetchError.name === 'AbortError') {
+        return new Response(
+          JSON.stringify({ error: `Detection timed out. ${isVideo ? 'Video' : 'Image'} processing took too long.` }),
+          { status: 504, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+      
+      throw fetchError;
     }
 
-    const detectionResult = await aiResponse.json();
-    console.log('Detection result:', JSON.stringify(detectionResult));
+    console.log('Detection completed successfully');
 
     // Extract detection information from new API format
     const mediaType = detectionResult.type || 'image'; // 'image' or 'video'
