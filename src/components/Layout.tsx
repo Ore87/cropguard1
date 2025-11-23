@@ -1,7 +1,9 @@
 import { Link, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { AIChatWidget } from "@/components/AIChatWidget";
+import { useFarmAdvisorStatus } from "@/hooks/useFarmAdvisorStatus";
 import { 
   LayoutDashboard, 
   Thermometer, 
@@ -22,6 +24,7 @@ import {
 export const Layout = ({ children }: { children: React.ReactNode }) => {
   const { userRole, signOut } = useAuth();
   const location = useLocation();
+  const { hasUrgentRecommendations, urgentCount } = useFarmAdvisorStatus();
 
   const farmerLinks = [
     { to: "/dashboard", icon: LayoutDashboard, label: "Dashboard" },
@@ -55,14 +58,25 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
           {links.map((link) => {
             const Icon = link.icon;
             const isActive = location.pathname === link.to;
+            const isFarmAdvisor = link.to === "/farm-advisor";
+            const showBadge = isFarmAdvisor && hasUrgentRecommendations;
+            
             return (
               <Link key={link.to} to={link.to}>
                 <Button
                   variant={isActive ? "secondary" : "ghost"}
-                  className="w-full justify-start gap-3 text-base"
+                  className="w-full justify-start gap-3 text-base relative"
                 >
                   <Icon className="h-5 w-5" />
                   {link.label}
+                  {showBadge && (
+                    <Badge 
+                      variant="destructive" 
+                      className="ml-auto h-5 min-w-5 px-1.5 flex items-center justify-center text-xs"
+                    >
+                      {urgentCount}
+                    </Badge>
+                  )}
                 </Button>
               </Link>
             );
