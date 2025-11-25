@@ -3,64 +3,84 @@ import { Layout } from "@/components/Layout";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { MapPin, Briefcase } from "lucide-react";
-import { toast } from "sonner";
+import { MapPin, Phone, Mail, MapPinned } from "lucide-react";
+import jonathanImage from "@/assets/experts/jonathan-katungu.png";
+import charityImage from "@/assets/experts/charity-irone.png";
+import adeniyiImage from "@/assets/experts/adeniyi-alagbe.png";
+import bashirImage from "@/assets/experts/bashir-isah.png";
+import olanrewajuImage from "@/assets/experts/olanrewaju-abolade.png";
+import ibrahimImage from "@/assets/experts/ibrahim-abubakar.png";
 
 const experts = [
   {
     id: 1,
-    name: "Dr. Zainab Al-Fayed",
-    title: "Plant Pathologist (Cassava Expert)",
-    location: "Ibadan, Oyo State",
-    avatar: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=400&h=400&fit=crop",
-    initials: "ZA"
+    name: "Jonathan Katungu",
+    region: "Jos, Plateau State",
+    address: "No. 2 Anguldi Express, Opp. Mafeng Plaza before the Fire Service.",
+    phone: "+234 8032705731",
+    email: "Jonathan.katungu@seedcogroup.com",
+    mapLink: "http://maps.google.com/?q=9.7761533,8.85675",
+    avatar: jonathanImage,
+    initials: "JK"
   },
   {
     id: 2,
-    name: "Mr. Tunde Bakare",
-    title: "Soil Health Agronomist",
-    location: "Abeokuta, Ogun State",
-    avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=400&fit=crop",
-    initials: "TB"
+    name: "Charity Irone",
+    region: "Kaduna State",
+    address: "NN 16, Constitution Road, Opposite Stadium Second Gate.",
+    phone: "+234 8039925236",
+    email: "charity.irone@seedcogroup.com",
+    mapLink: "http://maps.google.com/?q=10.502651,7.4296591",
+    avatar: charityImage,
+    initials: "CI"
   },
   {
     id: 3,
-    name: "Dr. Amina Hassan",
-    title: "Integrated Pest Management Specialist",
-    location: "Kaduna, Kaduna State",
-    avatar: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=400&h=400&fit=crop",
-    initials: "AH"
+    name: "Adeniyi Alagbe",
+    region: "Iseyin, Oyo State",
+    address: "Alhaji Dare House, beside Ba-Nfati Cool Spot Barracks.",
+    phone: "+234 8166864217",
+    email: "niyi.alagbe@seedcogroup.com",
+    mapLink: "http://maps.google.com/?q=7.9593653,3.6122989",
+    avatar: adeniyiImage,
+    initials: "AA"
   },
   {
     id: 4,
-    name: "Prof. Chukwuma Okonkwo",
-    title: "Crop Yield Optimization Expert",
-    location: "Enugu, Enugu State",
-    avatar: "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=400&h=400&fit=crop",
-    initials: "CO"
+    name: "Bashir Isah",
+    region: "Gombe state",
+    address: "ASM Mai Manja Plaza, main market road, opposite Jaiz Bank.",
+    phone: "+234 8034317223",
+    email: "basir.isa@seedcogroup.com",
+    mapLink: "http://maps.google.com/?q=10.2831267,11.18297",
+    avatar: bashirImage,
+    initials: "BI"
   },
   {
     id: 5,
-    name: "Mrs. Folake Adeyemi",
-    title: "Sustainable Farming Consultant",
-    location: "Lagos, Lagos State",
-    avatar: "https://images.unsplash.com/photo-1580489944761-15a19d654956?w=400&h=400&fit=crop",
-    initials: "FA"
+    name: "Olanrewaju Abolade",
+    region: "Oyo, Oyo State",
+    address: "Adesakin House, Abiodun Atiba Road, Idi-Ope.",
+    phone: "+234 7062295469",
+    email: "olanrewaju.abolade@seedcogroup.com",
+    mapLink: "http://maps.google.com/?q=7.84726,3.92907",
+    avatar: olanrewajuImage,
+    initials: "OA"
   },
   {
     id: 6,
-    name: "Dr. Ibrahim Musa",
-    title: "Rice Production Specialist",
-    location: "Kano, Kano State",
-    avatar: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=400&h=400&fit=crop",
-    initials: "IM"
+    name: "Ibrahim Abubakar",
+    region: "Jimeta -Yola, Adamawa State",
+    address: "Shop 3 & 4 Yettore Plaza, Target Junction, Gimba Road.",
+    phone: "+234 7085860346",
+    email: "ibrahim.abubakar@seedcogroup.com",
+    mapLink: "http://maps.google.com/?q=9.2718171,12.4532972",
+    avatar: ibrahimImage,
+    initials: "IA"
   }
 ];
 
 const ExpertDirectory = () => {
-  const handleContact = (expertName: string) => {
-    toast.success(`Contact request sent to ${expertName}. They will reply shortly.`);
-  };
 
   return (
     <Layout>
@@ -87,21 +107,40 @@ const ExpertDirectory = () => {
               
               <CardContent className="flex-1 space-y-3">
                 <div className="flex items-start gap-2 text-sm">
-                  <Briefcase className="h-4 w-4 text-muted-foreground mt-0.5 flex-shrink-0" />
-                  <span className="text-muted-foreground">{expert.title}</span>
+                  <MapPin className="h-4 w-4 text-muted-foreground mt-0.5 flex-shrink-0" />
+                  <span className="text-muted-foreground">{expert.region}</span>
                 </div>
-                <div className="flex items-center gap-2 text-sm">
-                  <MapPin className="h-4 w-4 text-muted-foreground flex-shrink-0" />
-                  <span className="text-muted-foreground">{expert.location}</span>
+                <div className="flex items-start gap-2 text-sm">
+                  <MapPinned className="h-4 w-4 text-muted-foreground mt-0.5 flex-shrink-0" />
+                  <span className="text-muted-foreground text-xs">{expert.address}</span>
                 </div>
               </CardContent>
 
-              <CardFooter>
+              <CardFooter className="flex flex-col gap-2">
+                <div className="flex gap-2 w-full">
+                  <Button 
+                    className="flex-1"
+                    variant="outline"
+                    onClick={() => window.open(`tel:${expert.phone}`)}
+                  >
+                    <Phone className="h-4 w-4 mr-2" />
+                    Call
+                  </Button>
+                  <Button 
+                    className="flex-1"
+                    variant="outline"
+                    onClick={() => window.open(`mailto:${expert.email}`)}
+                  >
+                    <Mail className="h-4 w-4 mr-2" />
+                    Email
+                  </Button>
+                </div>
                 <Button 
                   className="w-full bg-primary hover:bg-primary/90"
-                  onClick={() => handleContact(expert.name)}
+                  onClick={() => window.open(expert.mapLink, '_blank')}
                 >
-                  Contact Expert
+                  <MapPinned className="h-4 w-4 mr-2" />
+                  View Address
                 </Button>
               </CardFooter>
             </Card>

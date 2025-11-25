@@ -2,9 +2,21 @@ import { useEffect, useState } from "react";
 import { Layout } from "@/components/Layout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
-import { FileSearch, AlertCircle } from "lucide-react";
+import { FileSearch, AlertCircle, Trash2 } from "lucide-react";
+import { toast } from "sonner";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 interface AnalysisReport {
   id: string;
@@ -20,6 +32,9 @@ const Analysis = () => {
   const { user } = useAuth();
   const [reports, setReports] = useState<AnalysisReport[]>([]);
   const [loading, setLoading] = useState(true);
+  const [showClearDialog, setShowClearDialog] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [displayCount, setDisplayCount] = useState(20);
 
   useEffect(() => {
     fetchReports();
@@ -50,7 +65,8 @@ const Analysis = () => {
         .from("analysis_reports")
         .select("*")
         .eq("farm_id", farm.id)
-        .order("analyzed_at", { ascending: false });
+        .order("analyzed_at", { ascending: false })
+        .limit(100); // Fetch more than needed for pagination
 
       if (reportsError) {
         console.error("Error fetching reports:", reportsError);
@@ -62,6 +78,49 @@ const Analysis = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleClearAllHistory = async () => {
+    if (!user) return;
+
+    setIsDeleting(true);
+    try {
+      const { data: farm, error: farmError } = await supabase
+        .from("farms")
+        .select("id")
+        .eq("farmer_id", user.id)
+        .maybeSingle();
+
+      if (farmError || !farm) {
+        toast.error("Failed to clear history");
+        setIsDeleting(false);
+        return;
+      }
+
+      const { error: deleteError } = await supabase
+        .from("analysis_reports")
+        .delete()
+        .eq("farm_id", farm.id);
+
+      if (deleteError) {
+        toast.error("Failed to delete reports");
+        console.error("Error deleting reports:", deleteError);
+      } else {
+        toast.success("All analysis reports have been deleted");
+        setReports([]);
+        setDisplayCount(20);
+      }
+    } catch (error) {
+      console.error("Error clearing history:", error);
+      toast.error("An error occurred while deleting reports");
+    } finally {
+      setIsDeleting(false);
+      setShowClearDialog(false);
+    }
+  };
+
+  const handleLoadMore = () => {
+    setDisplayCount((prev) => prev + 20);
   };
 
   const getSeverityColor = (level: string) => {
@@ -92,12 +151,27 @@ const Analysis = () => {
     );
   }
 
+  const displayedReports = reports.slice(0, displayCount);
+  const hasMore = displayCount < reports.length;
+
   return (
     <Layout>
       <div className="p-8">
-        <div className="mb-6 flex items-center gap-3">
-          <FileSearch className="h-8 w-8 text-primary" />
-          <h1 className="text-3xl font-bold text-foreground">AI Analysis Reports</h1>
+        <div className="mb-6 flex items-center justify-between flex-wrap gap-4">
+          <div className="flex items-center gap-3">
+            <FileSearch className="h-8 w-8 text-primary" />
+            <h1 className="text-3xl font-bold text-foreground">AI Analysis Reports</h1>
+          </div>
+          {reports.length > 0 && (
+            <Button
+              variant="destructive"
+              onClick={() => setShowClearDialog(true)}
+              className="gap-2"
+            >
+              <Trash2 className="h-4 w-4" />
+              Clear All History
+            </Button>
+          )}
         </div>
 
         {reports.length === 0 ? (
@@ -111,8 +185,9 @@ const Analysis = () => {
             </CardContent>
           </Card>
         ) : (
-          <div className="grid gap-6 lg:grid-cols-2">
-            {reports.map((report) => (
+          <>
+            <div className="grid gap-6 lg:grid-cols-2">
+              {displayedReports.map((report) => (
               <Card key={report.id}>
                 <CardHeader>
                   <div className="flex items-center justify-between">
@@ -157,10 +232,39 @@ const Analysis = () => {
                   </div>
                 </CardContent>
               </Card>
-            ))}
-          </div>
+              ))}
+            </div>
+            {hasMore && (
+              <div className="mt-6 flex justify-center">
+                <Button onClick={handleLoadMore} variant="outline" size="lg">
+                  Load More Reports
+                </Button>
+              </div>
+            )}
+          </>
         )}
       </div>
+
+      <AlertDialog open={showClearDialog} onOpenChange={setShowClearDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Clear All Analysis Reports?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete all past analysis reports? This action cannot be undone and all historical data will be permanently removed.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleClearAllHistory}
+              disabled={isDeleting}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {isDeleting ? "Deleting..." : "Confirm Delete"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Layout>
   );
 };

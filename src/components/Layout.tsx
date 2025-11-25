@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { AIChatWidget } from "@/components/AIChatWidget";
 import { useFarmAdvisorStatus } from "@/hooks/useFarmAdvisorStatus";
+import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -29,7 +30,8 @@ import {
   CloudSun,
   TrendingUp,
   UserCog,
-  Lightbulb
+  Lightbulb,
+  Menu
 } from "lucide-react";
 
 export const Layout = ({ children }: { children: React.ReactNode }) => {
@@ -38,6 +40,7 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
   const location = useLocation();
   const { hasUrgentRecommendations, urgentCount } = useFarmAdvisorStatus();
   const [showSignOutDialog, setShowSignOutDialog] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const handleSignOut = async () => {
     await signOut();
@@ -66,50 +69,84 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
 
   const links = userRole === "agronomist" ? adminLinks : farmerLinks;
 
+  const NavigationLinks = ({ onLinkClick }: { onLinkClick?: () => void }) => (
+    <>
+      {links.map((link) => {
+        const Icon = link.icon;
+        const isActive = location.pathname === link.to;
+        const isFarmAdvisor = link.to === "/farm-advisor";
+        const showBadge = isFarmAdvisor && hasUrgentRecommendations;
+        
+        return (
+          <Link key={link.to} to={link.to} onClick={onLinkClick}>
+            <Button
+              variant={isActive ? "secondary" : "ghost"}
+              className="w-full justify-start gap-3 text-base relative"
+            >
+              <Icon className="h-5 w-5" />
+              {link.label}
+              {showBadge && (
+                <Badge 
+                  variant="destructive" 
+                  className="ml-auto h-5 min-w-5 px-1.5 flex items-center justify-center text-xs"
+                >
+                  {urgentCount}
+                </Badge>
+              )}
+            </Button>
+          </Link>
+        );
+      })}
+      <Button
+        variant="ghost"
+        className="w-full justify-start gap-3 text-base mt-auto"
+        onClick={() => {
+          setShowSignOutDialog(true);
+          onLinkClick?.();
+        }}
+      >
+        <LogOut className="h-5 w-5" />
+        Sign Out
+      </Button>
+    </>
+  );
+
   return (
     <div className="flex min-h-screen bg-background">
-      <aside className="w-64 border-r border-border bg-card">
+      {/* Mobile Header */}
+      <div className="lg:hidden fixed top-0 left-0 right-0 h-16 border-b border-border bg-card z-50 flex items-center justify-between px-4">
+        <Link to="/dashboard" className="text-xl font-bold text-primary">
+          CropGuard
+        </Link>
+        <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
+          <SheetTrigger asChild>
+            <Button variant="ghost" size="icon">
+              <Menu className="h-6 w-6" />
+            </Button>
+          </SheetTrigger>
+          <SheetContent side="left" className="w-64 p-0">
+            <div className="flex h-16 items-center border-b border-border px-6">
+              <h1 className="text-xl font-bold text-primary">CropGuard</h1>
+            </div>
+            <nav className="flex flex-col gap-1 p-4">
+              <NavigationLinks onLinkClick={() => setMobileMenuOpen(false)} />
+            </nav>
+          </SheetContent>
+        </Sheet>
+      </div>
+
+      {/* Desktop Sidebar */}
+      <aside className="hidden lg:block w-64 border-r border-border bg-card">
         <div className="flex h-16 items-center border-b border-border px-6">
-          <h1 className="text-xl font-bold text-primary">CropGuard</h1>
+          <Link to="/dashboard" className="text-xl font-bold text-primary hover:text-primary/90 transition-colors">
+            CropGuard
+          </Link>
         </div>
         <nav className="flex flex-col gap-1 p-4">
-          {links.map((link) => {
-            const Icon = link.icon;
-            const isActive = location.pathname === link.to;
-            const isFarmAdvisor = link.to === "/farm-advisor";
-            const showBadge = isFarmAdvisor && hasUrgentRecommendations;
-            
-            return (
-              <Link key={link.to} to={link.to}>
-                <Button
-                  variant={isActive ? "secondary" : "ghost"}
-                  className="w-full justify-start gap-3 text-base relative"
-                >
-                  <Icon className="h-5 w-5" />
-                  {link.label}
-                  {showBadge && (
-                    <Badge 
-                      variant="destructive" 
-                      className="ml-auto h-5 min-w-5 px-1.5 flex items-center justify-center text-xs"
-                    >
-                      {urgentCount}
-                    </Badge>
-                  )}
-                </Button>
-              </Link>
-            );
-          })}
-          <Button
-            variant="ghost"
-            className="w-full justify-start gap-3 text-base mt-auto"
-            onClick={() => setShowSignOutDialog(true)}
-          >
-            <LogOut className="h-5 w-5" />
-            Sign Out
-          </Button>
+          <NavigationLinks />
         </nav>
       </aside>
-      <main className="flex-1 overflow-auto">
+      <main className="flex-1 overflow-auto lg:ml-0 pt-16 lg:pt-0">
         {children}
         <AIChatWidget />
       </main>
