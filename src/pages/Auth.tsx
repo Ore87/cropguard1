@@ -19,6 +19,7 @@ const Auth = () => {
   const [loginPassword, setLoginPassword] = useState("");
   const [signupEmail, setSignupEmail] = useState("");
   const [signupPassword, setSignupPassword] = useState("");
+  const [signupConfirmPassword, setSignupConfirmPassword] = useState("");
   const [signupFullName, setSignupFullName] = useState("");
   const [signupRole, setSignupRole] = useState<"farmer" | "agronomist">("farmer");
 
@@ -53,6 +54,17 @@ const Auth = () => {
 
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (signupPassword !== signupConfirmPassword) {
+      toast.error("Passwords do not match");
+      return;
+    }
+
+    if (signupPassword.length < 6) {
+      toast.error("Password must be at least 6 characters long");
+      return;
+    }
+
     setLoading(true);
 
     try {
@@ -69,7 +81,7 @@ const Auth = () => {
       });
 
       if (error) throw error;
-      toast.success("Account created successfully!");
+      toast.success("Account created successfully! Please check your email to verify your account.");
     } catch (error: any) {
       toast.error(error.message || "Failed to create account");
     } finally {
@@ -154,6 +166,18 @@ const Auth = () => {
                     type="password"
                     value={signupPassword}
                     onChange={(e) => setSignupPassword(e.target.value)}
+                    required
+                    minLength={6}
+                  />
+                  <p className="text-xs text-muted-foreground">Must be at least 6 characters</p>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="signup-confirm-password">Confirm Password</Label>
+                  <Input
+                    id="signup-confirm-password"
+                    type="password"
+                    value={signupConfirmPassword}
+                    onChange={(e) => setSignupConfirmPassword(e.target.value)}
                     required
                     minLength={6}
                   />

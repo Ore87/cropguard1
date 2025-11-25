@@ -1,9 +1,20 @@
-import { Link, useLocation } from "react-router-dom";
+import { useState } from "react";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { AIChatWidget } from "@/components/AIChatWidget";
 import { useFarmAdvisorStatus } from "@/hooks/useFarmAdvisorStatus";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { 
   LayoutDashboard, 
   Thermometer, 
@@ -23,8 +34,15 @@ import {
 
 export const Layout = ({ children }: { children: React.ReactNode }) => {
   const { userRole, signOut } = useAuth();
+  const navigate = useNavigate();
   const location = useLocation();
   const { hasUrgentRecommendations, urgentCount } = useFarmAdvisorStatus();
+  const [showSignOutDialog, setShowSignOutDialog] = useState(false);
+
+  const handleSignOut = async () => {
+    await signOut();
+    navigate("/");
+  };
 
   const farmerLinks = [
     { to: "/dashboard", icon: LayoutDashboard, label: "Dashboard" },
@@ -84,7 +102,7 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
           <Button
             variant="ghost"
             className="w-full justify-start gap-3 text-base mt-auto"
-            onClick={signOut}
+            onClick={() => setShowSignOutDialog(true)}
           >
             <LogOut className="h-5 w-5" />
             Sign Out
@@ -95,6 +113,21 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
         {children}
         <AIChatWidget />
       </main>
+
+      <AlertDialog open={showSignOutDialog} onOpenChange={setShowSignOutDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Sign Out</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to sign out? You will need to log in again to access your account.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleSignOut}>Sign Out</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
