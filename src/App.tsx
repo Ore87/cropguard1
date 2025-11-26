@@ -22,6 +22,8 @@ import AdminDashboard from "./pages/admin/AdminDashboard";
 import FarmManagement from "./pages/admin/FarmManagement";
 import UserManagement from "./pages/admin/UserManagement";
 import AnalysisReview from "./pages/admin/AnalysisReview";
+import TermsOfService from "./pages/TermsOfService";
+import PrivacyPolicy from "./pages/PrivacyPolicy";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -51,6 +53,8 @@ const App = () => (
             <Route path="/admin/farms" element={<ProtectedRoute allowedRoles={["agronomist"]}><FarmManagement /></ProtectedRoute>} />
             <Route path="/admin/users" element={<ProtectedRoute allowedRoles={["agronomist"]}><UserManagement /></ProtectedRoute>} />
             <Route path="/admin/analysis" element={<ProtectedRoute allowedRoles={["agronomist"]}><AnalysisReview /></ProtectedRoute>} />
+            <Route path="/terms" element={<TermsOfService />} />
+            <Route path="/privacy" element={<PrivacyPolicy />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>
