@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
@@ -8,9 +8,9 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
-import { Leaf, Eye, EyeOff, Mail } from "lucide-react";
+import { Leaf, Eye, EyeOff } from "lucide-react";
 
 const Auth = () => {
   const navigate = useNavigate();
@@ -26,9 +26,9 @@ const Auth = () => {
   const [showLoginPassword, setShowLoginPassword] = useState(false);
   const [showSignupPassword, setShowSignupPassword] = useState(false);
   const [showSignupConfirmPassword, setShowSignupConfirmPassword] = useState(false);
-  const [loginMethod, setLoginMethod] = useState<"password" | "otp">("password");
-  const [loginOtp, setLoginOtp] = useState("");
-  const [otpSent, setOtpSent] = useState(false);
+  const [agreeToTerms, setAgreeToTerms] = useState(false);
+  const [showForgotPassword, setShowForgotPassword] = useState(false);
+  const [resetEmail, setResetEmail] = useState("");
 
   useEffect(() => {
     if (user && userRole) {
@@ -45,34 +45,12 @@ const Auth = () => {
     setLoading(true);
 
     try {
-      if (loginMethod === "password") {
-        const { error } = await supabase.auth.signInWithPassword({
-          email: loginEmail,
-          password: loginPassword,
-        });
-        if (error) throw error;
-        toast.success("Welcome back!");
-      } else {
-        if (!otpSent) {
-          const { error } = await supabase.auth.signInWithOtp({
-            email: loginEmail,
-            options: {
-              shouldCreateUser: false,
-            },
-          });
-          if (error) throw error;
-          setOtpSent(true);
-          toast.success("Verification code sent to your email!");
-        } else {
-          const { error } = await supabase.auth.verifyOtp({
-            email: loginEmail,
-            token: loginOtp,
-            type: 'email',
-          });
-          if (error) throw error;
-          toast.success("Welcome back!");
-        }
-      }
+      const { error } = await supabase.auth.signInWithPassword({
+        email: loginEmail,
+        password: loginPassword,
+      });
+      if (error) throw error;
+      toast.success("Welcome back!");
     } catch (error: any) {
       toast.error(error.message || "Failed to sign in");
     } finally {
@@ -80,8 +58,32 @@ const Auth = () => {
     }
   };
 
+  const handleForgotPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(resetEmail, {
+        redirectTo: `${window.location.origin}/auth`,
+      });
+      if (error) throw error;
+      toast.success("Password reset link sent to your email!");
+      setShowForgotPassword(false);
+      setResetEmail("");
+    } catch (error: any) {
+      toast.error(error.message || "Failed to send reset link");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (!agreeToTerms) {
+      toast.error("Please agree to the Terms of Service and Privacy Policy");
+      return;
+    }
 
     if (signupPassword !== signupConfirmPassword) {
       toast.error("Passwords do not match");
@@ -108,7 +110,7 @@ const Auth = () => {
         },
       });
       if (error) throw error;
-      toast.success("Account created! Please check your email for verification code.");
+      toast.success("Account created! Please check your email for verification.");
     } catch (error: any) {
       toast.error(error.message || "Failed to create account");
     } finally {
@@ -134,43 +136,45 @@ const Auth = () => {
             </TabsList>
 
             <TabsContent value="login">
-              <form onSubmit={handleLogin} className="space-y-4">
-                <div className="space-y-3">
-                  <Label>Login Method</Label>
-                  <RadioGroup value={loginMethod} onValueChange={(value: "password" | "otp") => {
-                    setLoginMethod(value);
-                    setOtpSent(false);
-                  }}>
-                    <div className="flex items-center space-x-2">
-                      <RadioGroupItem value="password" id="login-password-method" />
-                      <Label htmlFor="login-password-method" className="font-normal cursor-pointer">Email & Password</Label>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <RadioGroupItem value="otp" id="login-otp-method" />
-                      <Label htmlFor="login-otp-method" className="font-normal cursor-pointer">
-                        <div className="flex items-center gap-2">
-                          <Mail className="h-4 w-4" />
-                          Email Verification Code
-                        </div>
-                      </Label>
-                    </div>
-                  </RadioGroup>
-                </div>
+              {showForgotPassword ? (
+                <form onSubmit={handleForgotPassword} className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="reset-email">Email</Label>
+                    <Input
+                      id="reset-email"
+                      type="email"
+                      placeholder="farmer@example.com"
+                      value={resetEmail}
+                      onChange={(e) => setResetEmail(e.target.value)}
+                      required
+                    />
+                  </div>
+                  <Button type="submit" className="w-full" disabled={loading}>
+                    {loading ? "Sending..." : "Send Reset Link"}
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    className="w-full"
+                    onClick={() => setShowForgotPassword(false)}
+                  >
+                    Back to Login
+                  </Button>
+                </form>
+              ) : (
+                <form onSubmit={handleLogin} className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="login-email">Email</Label>
+                    <Input
+                      id="login-email"
+                      type="email"
+                      placeholder="farmer@example.com"
+                      value={loginEmail}
+                      onChange={(e) => setLoginEmail(e.target.value)}
+                      required
+                    />
+                  </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="login-email">Email</Label>
-                  <Input
-                    id="login-email"
-                    type="email"
-                    placeholder="farmer@example.com"
-                    value={loginEmail}
-                    onChange={(e) => setLoginEmail(e.target.value)}
-                    required
-                    disabled={otpSent}
-                  />
-                </div>
-
-                {loginMethod === "password" ? (
                   <div className="space-y-2">
                     <Label htmlFor="login-password">Password</Label>
                     <div className="relative">
@@ -197,26 +201,21 @@ const Auth = () => {
                       </Button>
                     </div>
                   </div>
-                ) : otpSent ? (
-                  <div className="space-y-2">
-                    <Label htmlFor="login-otp">Verification Code</Label>
-                    <Input
-                      id="login-otp"
-                      type="text"
-                      placeholder="Enter 6-digit code"
-                      value={loginOtp}
-                      onChange={(e) => setLoginOtp(e.target.value)}
-                      required
-                      maxLength={6}
-                    />
-                    <p className="text-xs text-muted-foreground">Check your email for the code</p>
-                  </div>
-                ) : null}
 
-                <Button type="submit" className="w-full" disabled={loading}>
-                  {loading ? "Processing..." : otpSent ? "Verify Code" : loginMethod === "otp" ? "Send Code" : "Sign In"}
-                </Button>
-              </form>
+                  <Button
+                    type="button"
+                    variant="link"
+                    className="px-0 text-sm"
+                    onClick={() => setShowForgotPassword(true)}
+                  >
+                    Forgot password?
+                  </Button>
+
+                  <Button type="submit" className="w-full" disabled={loading}>
+                    {loading ? "Signing in..." : "Sign In"}
+                  </Button>
+                </form>
+              )}
             </TabsContent>
 
             <TabsContent value="signup">
@@ -242,10 +241,6 @@ const Auth = () => {
                     onChange={(e) => setSignupEmail(e.target.value)}
                     required
                   />
-                  <p className="text-xs text-muted-foreground flex items-center gap-1">
-                    <Mail className="h-3 w-3" />
-                    Verification code will be sent to your email
-                  </p>
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="signup-password">Password</Label>
@@ -313,6 +308,23 @@ const Auth = () => {
                       <SelectItem value="agronomist">Agronomist</SelectItem>
                     </SelectContent>
                   </Select>
+                </div>
+                <div className="flex items-start space-x-2">
+                  <Checkbox
+                    id="terms"
+                    checked={agreeToTerms}
+                    onCheckedChange={(checked) => setAgreeToTerms(checked as boolean)}
+                  />
+                  <Label htmlFor="terms" className="text-sm font-normal leading-tight cursor-pointer">
+                    I agree to the{" "}
+                    <Link to="/terms" className="text-primary hover:underline" target="_blank">
+                      Terms of Service
+                    </Link>{" "}
+                    and{" "}
+                    <Link to="/privacy" className="text-primary hover:underline" target="_blank">
+                      Privacy Policy
+                    </Link>
+                  </Label>
                 </div>
                 <Button type="submit" className="w-full" disabled={loading}>
                   {loading ? "Creating account..." : "Create Account"}
