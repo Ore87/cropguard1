@@ -159,7 +159,10 @@ const FarmAdvisor = () => {
                   </div>
                 </CardHeader>
                 <CardContent>
-                  <p className="text-base leading-relaxed">{rec.message}</p>
+                  <p 
+                    className="text-base leading-relaxed" 
+                    dangerouslySetInnerHTML={{ __html: rec.message }}
+                  />
                 </CardContent>
               </Card>
             ))}
