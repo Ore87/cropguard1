@@ -18,6 +18,7 @@ import Alerts from "./pages/farmer/Alerts";
 import Profile from "./pages/farmer/Profile";
 import ReportDetails from "./pages/farmer/ReportDetails";
 import FarmAdvisor from "./pages/farmer/FarmAdvisor";
+import FarmStore from "./pages/farmer/FarmStore";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import FarmManagement from "./pages/admin/FarmManagement";
 import UserManagement from "./pages/admin/UserManagement";
@@ -43,6 +44,7 @@ const App = () => (
             <Route path="/weather" element={<ProtectedRoute allowedRoles={["farmer"]}><Weather /></ProtectedRoute>} />
             <Route path="/market-trends" element={<ProtectedRoute allowedRoles={["farmer"]}><MarketTrends /></ProtectedRoute>} />
             <Route path="/expert-directory" element={<ProtectedRoute allowedRoles={["farmer"]}><ExpertDirectory /></ProtectedRoute>} />
+            <Route path="/farm-store" element={<ProtectedRoute allowedRoles={["farmer"]}><FarmStore /></ProtectedRoute>} />
             <Route path="/upload" element={<ProtectedRoute allowedRoles={["farmer"]}><Upload /></ProtectedRoute>} />
             <Route path="/analysis" element={<ProtectedRoute allowedRoles={["farmer"]}><Analysis /></ProtectedRoute>} />
             <Route path="/farmer/report/:reportId" element={<ProtectedRoute allowedRoles={["farmer"]}><ReportDetails /></ProtectedRoute>} />
