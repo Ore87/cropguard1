@@ -10,7 +10,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { toast } from "sonner";
-import { Leaf, Eye, EyeOff } from "lucide-react";
+import { Leaf, Eye, EyeOff, Mail } from "lucide-react";
 
 const Auth = () => {
   const navigate = useNavigate();
@@ -26,14 +26,9 @@ const Auth = () => {
   const [showLoginPassword, setShowLoginPassword] = useState(false);
   const [showSignupPassword, setShowSignupPassword] = useState(false);
   const [showSignupConfirmPassword, setShowSignupConfirmPassword] = useState(false);
-  const [loginMethod, setLoginMethod] = useState<"email" | "phone">("email");
-  const [signupMethod, setSignupMethod] = useState<"email" | "phone">("email");
-  const [loginPhone, setLoginPhone] = useState("");
+  const [loginMethod, setLoginMethod] = useState<"password" | "otp">("password");
   const [loginOtp, setLoginOtp] = useState("");
-  const [signupPhone, setSignupPhone] = useState("");
-  const [signupOtp, setSignupOtp] = useState("");
   const [otpSent, setOtpSent] = useState(false);
-  const [signupOtpSent, setSignupOtpSent] = useState(false);
 
   useEffect(() => {
     if (user && userRole) {
@@ -50,7 +45,7 @@ const Auth = () => {
     setLoading(true);
 
     try {
-      if (loginMethod === "email") {
+      if (loginMethod === "password") {
         const { error } = await supabase.auth.signInWithPassword({
           email: loginEmail,
           password: loginPassword,
@@ -60,16 +55,19 @@ const Auth = () => {
       } else {
         if (!otpSent) {
           const { error } = await supabase.auth.signInWithOtp({
-            phone: loginPhone,
+            email: loginEmail,
+            options: {
+              shouldCreateUser: false,
+            },
           });
           if (error) throw error;
           setOtpSent(true);
-          toast.success("OTP sent to your phone!");
+          toast.success("Verification code sent to your email!");
         } else {
           const { error } = await supabase.auth.verifyOtp({
-            phone: loginPhone,
+            email: loginEmail,
             token: loginOtp,
-            type: 'sms',
+            type: 'email',
           });
           if (error) throw error;
           toast.success("Welcome back!");
@@ -85,59 +83,32 @@ const Auth = () => {
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (signupMethod === "email") {
-      if (signupPassword !== signupConfirmPassword) {
-        toast.error("Passwords do not match");
-        return;
-      }
+    if (signupPassword !== signupConfirmPassword) {
+      toast.error("Passwords do not match");
+      return;
+    }
 
-      if (signupPassword.length < 6) {
-        toast.error("Password must be at least 6 characters long");
-        return;
-      }
+    if (signupPassword.length < 6) {
+      toast.error("Password must be at least 6 characters long");
+      return;
     }
 
     setLoading(true);
 
     try {
-      if (signupMethod === "email") {
-        const { error } = await supabase.auth.signUp({
-          email: signupEmail,
-          password: signupPassword,
-          options: {
-            data: {
-              full_name: signupFullName,
-              role: signupRole,
-            },
-            emailRedirectTo: `${window.location.origin}/`,
+      const { error } = await supabase.auth.signUp({
+        email: signupEmail,
+        password: signupPassword,
+        options: {
+          data: {
+            full_name: signupFullName,
+            role: signupRole,
           },
-        });
-        if (error) throw error;
-        toast.success("Account created successfully! Please check your email to verify your account.");
-      } else {
-        if (!signupOtpSent) {
-          const { error } = await supabase.auth.signInWithOtp({
-            phone: signupPhone,
-            options: {
-              data: {
-                full_name: signupFullName,
-                role: signupRole,
-              },
-            },
-          });
-          if (error) throw error;
-          setSignupOtpSent(true);
-          toast.success("OTP sent to your phone!");
-        } else {
-          const { error } = await supabase.auth.verifyOtp({
-            phone: signupPhone,
-            token: signupOtp,
-            type: 'sms',
-          });
-          if (error) throw error;
-          toast.success("Account created successfully!");
-        }
-      }
+          emailRedirectTo: `${window.location.origin}/`,
+        },
+      });
+      if (error) throw error;
+      toast.success("Account created! Please check your email for verification code.");
     } catch (error: any) {
       toast.error(error.message || "Failed to create account");
     } finally {
@@ -166,118 +137,90 @@ const Auth = () => {
               <form onSubmit={handleLogin} className="space-y-4">
                 <div className="space-y-3">
                   <Label>Login Method</Label>
-                  <RadioGroup value={loginMethod} onValueChange={(value: "email" | "phone") => {
+                  <RadioGroup value={loginMethod} onValueChange={(value: "password" | "otp") => {
                     setLoginMethod(value);
                     setOtpSent(false);
                   }}>
                     <div className="flex items-center space-x-2">
-                      <RadioGroupItem value="email" id="login-email-method" />
-                      <Label htmlFor="login-email-method" className="font-normal cursor-pointer">Email & Password</Label>
+                      <RadioGroupItem value="password" id="login-password-method" />
+                      <Label htmlFor="login-password-method" className="font-normal cursor-pointer">Email & Password</Label>
                     </div>
                     <div className="flex items-center space-x-2">
-                      <RadioGroupItem value="phone" id="login-phone-method" />
-                      <Label htmlFor="login-phone-method" className="font-normal cursor-pointer">Phone Number</Label>
+                      <RadioGroupItem value="otp" id="login-otp-method" />
+                      <Label htmlFor="login-otp-method" className="font-normal cursor-pointer">
+                        <div className="flex items-center gap-2">
+                          <Mail className="h-4 w-4" />
+                          Email Verification Code
+                        </div>
+                      </Label>
                     </div>
                   </RadioGroup>
                 </div>
 
-                {loginMethod === "email" ? (
-                  <>
-                    <div className="space-y-2">
-                      <Label htmlFor="login-email">Email</Label>
+                <div className="space-y-2">
+                  <Label htmlFor="login-email">Email</Label>
+                  <Input
+                    id="login-email"
+                    type="email"
+                    placeholder="farmer@example.com"
+                    value={loginEmail}
+                    onChange={(e) => setLoginEmail(e.target.value)}
+                    required
+                    disabled={otpSent}
+                  />
+                </div>
+
+                {loginMethod === "password" ? (
+                  <div className="space-y-2">
+                    <Label htmlFor="login-password">Password</Label>
+                    <div className="relative">
                       <Input
-                        id="login-email"
-                        type="email"
-                        placeholder="farmer@example.com"
-                        value={loginEmail}
-                        onChange={(e) => setLoginEmail(e.target.value)}
+                        id="login-password"
+                        type={showLoginPassword ? "text" : "password"}
+                        value={loginPassword}
+                        onChange={(e) => setLoginPassword(e.target.value)}
                         required
+                        className="pr-10"
                       />
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        className="absolute right-0 top-0 h-full px-3 hover:bg-transparent"
+                        onClick={() => setShowLoginPassword(!showLoginPassword)}
+                      >
+                        {showLoginPassword ? (
+                          <EyeOff className="h-4 w-4 text-muted-foreground" />
+                        ) : (
+                          <Eye className="h-4 w-4 text-muted-foreground" />
+                        )}
+                      </Button>
                     </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="login-password">Password</Label>
-                      <div className="relative">
-                        <Input
-                          id="login-password"
-                          type={showLoginPassword ? "text" : "password"}
-                          value={loginPassword}
-                          onChange={(e) => setLoginPassword(e.target.value)}
-                          required
-                          className="pr-10"
-                        />
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="icon"
-                          className="absolute right-0 top-0 h-full px-3 hover:bg-transparent"
-                          onClick={() => setShowLoginPassword(!showLoginPassword)}
-                        >
-                          {showLoginPassword ? (
-                            <EyeOff className="h-4 w-4 text-muted-foreground" />
-                          ) : (
-                            <Eye className="h-4 w-4 text-muted-foreground" />
-                          )}
-                        </Button>
-                      </div>
-                    </div>
-                  </>
-                ) : (
-                  <>
-                    <div className="space-y-2">
-                      <Label htmlFor="login-phone">Phone Number</Label>
-                      <Input
-                        id="login-phone"
-                        type="tel"
-                        placeholder="+1234567890"
-                        value={loginPhone}
-                        onChange={(e) => setLoginPhone(e.target.value)}
-                        required
-                        disabled={otpSent}
-                      />
-                      <p className="text-xs text-muted-foreground">Include country code (e.g., +234)</p>
-                    </div>
-                    {otpSent && (
-                      <div className="space-y-2">
-                        <Label htmlFor="login-otp">Verification Code</Label>
-                        <Input
-                          id="login-otp"
-                          type="text"
-                          placeholder="Enter 6-digit code"
-                          value={loginOtp}
-                          onChange={(e) => setLoginOtp(e.target.value)}
-                          required
-                          maxLength={6}
-                        />
-                      </div>
-                    )}
-                  </>
-                )}
+                  </div>
+                ) : otpSent ? (
+                  <div className="space-y-2">
+                    <Label htmlFor="login-otp">Verification Code</Label>
+                    <Input
+                      id="login-otp"
+                      type="text"
+                      placeholder="Enter 6-digit code"
+                      value={loginOtp}
+                      onChange={(e) => setLoginOtp(e.target.value)}
+                      required
+                      maxLength={6}
+                    />
+                    <p className="text-xs text-muted-foreground">Check your email for the code</p>
+                  </div>
+                ) : null}
 
                 <Button type="submit" className="w-full" disabled={loading}>
-                  {loading ? "Processing..." : otpSent ? "Verify Code" : "Sign In"}
+                  {loading ? "Processing..." : otpSent ? "Verify Code" : loginMethod === "otp" ? "Send Code" : "Sign In"}
                 </Button>
               </form>
             </TabsContent>
 
             <TabsContent value="signup">
               <form onSubmit={handleSignup} className="space-y-4">
-                <div className="space-y-3">
-                  <Label>Signup Method</Label>
-                  <RadioGroup value={signupMethod} onValueChange={(value: "email" | "phone") => {
-                    setSignupMethod(value);
-                    setSignupOtpSent(false);
-                  }}>
-                    <div className="flex items-center space-x-2">
-                      <RadioGroupItem value="email" id="signup-email-method" />
-                      <Label htmlFor="signup-email-method" className="font-normal cursor-pointer">Email & Password</Label>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <RadioGroupItem value="phone" id="signup-phone-method" />
-                      <Label htmlFor="signup-phone-method" className="font-normal cursor-pointer">Phone Number</Label>
-                    </div>
-                  </RadioGroup>
-                </div>
-
                 <div className="space-y-2">
                   <Label htmlFor="signup-name">Full Name</Label>
                   <Input
@@ -289,108 +232,76 @@ const Auth = () => {
                     required
                   />
                 </div>
-
-                {signupMethod === "email" ? (
-                  <>
-                    <div className="space-y-2">
-                      <Label htmlFor="signup-email">Email</Label>
-                      <Input
-                        id="signup-email"
-                        type="email"
-                        placeholder="farmer@example.com"
-                        value={signupEmail}
-                        onChange={(e) => setSignupEmail(e.target.value)}
-                        required
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="signup-password">Password</Label>
-                      <div className="relative">
-                        <Input
-                          id="signup-password"
-                          type={showSignupPassword ? "text" : "password"}
-                          value={signupPassword}
-                          onChange={(e) => setSignupPassword(e.target.value)}
-                          required
-                          minLength={6}
-                          className="pr-10"
-                        />
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="icon"
-                          className="absolute right-0 top-0 h-full px-3 hover:bg-transparent"
-                          onClick={() => setShowSignupPassword(!showSignupPassword)}
-                        >
-                          {showSignupPassword ? (
-                            <EyeOff className="h-4 w-4 text-muted-foreground" />
-                          ) : (
-                            <Eye className="h-4 w-4 text-muted-foreground" />
-                          )}
-                        </Button>
-                      </div>
-                      <p className="text-xs text-muted-foreground">Must be at least 6 characters</p>
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="signup-confirm-password">Confirm Password</Label>
-                      <div className="relative">
-                        <Input
-                          id="signup-confirm-password"
-                          type={showSignupConfirmPassword ? "text" : "password"}
-                          value={signupConfirmPassword}
-                          onChange={(e) => setSignupConfirmPassword(e.target.value)}
-                          required
-                          minLength={6}
-                          className="pr-10"
-                        />
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="icon"
-                          className="absolute right-0 top-0 h-full px-3 hover:bg-transparent"
-                          onClick={() => setShowSignupConfirmPassword(!showSignupConfirmPassword)}
-                        >
-                          {showSignupConfirmPassword ? (
-                            <EyeOff className="h-4 w-4 text-muted-foreground" />
-                          ) : (
-                            <Eye className="h-4 w-4 text-muted-foreground" />
-                          )}
-                        </Button>
-                      </div>
-                    </div>
-                  </>
-                ) : (
-                  <>
-                    <div className="space-y-2">
-                      <Label htmlFor="signup-phone">Phone Number</Label>
-                      <Input
-                        id="signup-phone"
-                        type="tel"
-                        placeholder="+1234567890"
-                        value={signupPhone}
-                        onChange={(e) => setSignupPhone(e.target.value)}
-                        required
-                        disabled={signupOtpSent}
-                      />
-                      <p className="text-xs text-muted-foreground">Include country code (e.g., +234)</p>
-                    </div>
-                    {signupOtpSent && (
-                      <div className="space-y-2">
-                        <Label htmlFor="signup-otp">Verification Code</Label>
-                        <Input
-                          id="signup-otp"
-                          type="text"
-                          placeholder="Enter 6-digit code"
-                          value={signupOtp}
-                          onChange={(e) => setSignupOtp(e.target.value)}
-                          required
-                          maxLength={6}
-                        />
-                      </div>
-                    )}
-                  </>
-                )}
-
+                <div className="space-y-2">
+                  <Label htmlFor="signup-email">Email</Label>
+                  <Input
+                    id="signup-email"
+                    type="email"
+                    placeholder="farmer@example.com"
+                    value={signupEmail}
+                    onChange={(e) => setSignupEmail(e.target.value)}
+                    required
+                  />
+                  <p className="text-xs text-muted-foreground flex items-center gap-1">
+                    <Mail className="h-3 w-3" />
+                    Verification code will be sent to your email
+                  </p>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="signup-password">Password</Label>
+                  <div className="relative">
+                    <Input
+                      id="signup-password"
+                      type={showSignupPassword ? "text" : "password"}
+                      value={signupPassword}
+                      onChange={(e) => setSignupPassword(e.target.value)}
+                      required
+                      minLength={6}
+                      className="pr-10"
+                    />
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      className="absolute right-0 top-0 h-full px-3 hover:bg-transparent"
+                      onClick={() => setShowSignupPassword(!showSignupPassword)}
+                    >
+                      {showSignupPassword ? (
+                        <EyeOff className="h-4 w-4 text-muted-foreground" />
+                      ) : (
+                        <Eye className="h-4 w-4 text-muted-foreground" />
+                      )}
+                    </Button>
+                  </div>
+                  <p className="text-xs text-muted-foreground">Must be at least 6 characters</p>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="signup-confirm-password">Confirm Password</Label>
+                  <div className="relative">
+                    <Input
+                      id="signup-confirm-password"
+                      type={showSignupConfirmPassword ? "text" : "password"}
+                      value={signupConfirmPassword}
+                      onChange={(e) => setSignupConfirmPassword(e.target.value)}
+                      required
+                      minLength={6}
+                      className="pr-10"
+                    />
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      className="absolute right-0 top-0 h-full px-3 hover:bg-transparent"
+                      onClick={() => setShowSignupConfirmPassword(!showSignupConfirmPassword)}
+                    >
+                      {showSignupConfirmPassword ? (
+                        <EyeOff className="h-4 w-4 text-muted-foreground" />
+                      ) : (
+                        <Eye className="h-4 w-4 text-muted-foreground" />
+                      )}
+                    </Button>
+                  </div>
+                </div>
                 <div className="space-y-2">
                   <Label htmlFor="signup-role">Role</Label>
                   <Select value={signupRole} onValueChange={(value: "farmer" | "agronomist") => setSignupRole(value)}>
@@ -403,9 +314,8 @@ const Auth = () => {
                     </SelectContent>
                   </Select>
                 </div>
-
                 <Button type="submit" className="w-full" disabled={loading}>
-                  {loading ? "Processing..." : signupOtpSent ? "Verify Code" : "Create Account"}
+                  {loading ? "Creating account..." : "Create Account"}
                 </Button>
               </form>
             </TabsContent>
