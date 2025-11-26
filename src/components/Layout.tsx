@@ -31,7 +31,8 @@ import {
   TrendingUp,
   UserCog,
   Lightbulb,
-  Menu
+  Menu,
+  ShoppingBag
 } from "lucide-react";
 
 export const Layout = ({ children }: { children: React.ReactNode }) => {
@@ -57,6 +58,7 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
     { to: "/market-trends", icon: TrendingUp, label: "Market Trends" },
     { to: "/farm-advisor", icon: Lightbulb, label: "Farm Advisor" },
     { to: "/expert-directory", icon: UserCog, label: "Expert Directory" },
+    { to: "/farm-store", icon: ShoppingBag, label: "Farm Store" },
     { to: "/profile", icon: User, label: "Profile" },
   ];
 
