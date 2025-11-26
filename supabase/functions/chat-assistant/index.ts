@@ -18,6 +18,23 @@ serve(async (req) => {
       throw new Error("LOVABLE_API_KEY is not configured");
     }
 
+    // Transform messages to support images
+    const transformedMessages = messages.map((msg: any) => {
+      if (msg.imageUrls && msg.imageUrls.length > 0) {
+        return {
+          role: msg.role,
+          content: [
+            { type: "text", text: msg.content },
+            ...msg.imageUrls.map((url: string) => ({
+              type: "image_url",
+              image_url: { url }
+            }))
+          ]
+        };
+      }
+      return msg;
+    });
+
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
       headers: {
@@ -29,9 +46,9 @@ serve(async (req) => {
         messages: [
           { 
             role: "system", 
-            content: "You are CropGuard AI Assistant, a helpful agricultural advisor. You help farmers with questions about crop health, pest management, weather impacts, market trends, and sensor data interpretation. Provide clear, practical advice tailored to farming operations. Keep responses concise and actionable."
+            content: "You are CropGuard AI Assistant, a helpful agricultural advisor. You help farmers with questions about crop health, pest management, weather impacts, market trends, and sensor data interpretation. When analyzing crop or pest images, provide detailed observations about plant health, identify potential diseases or pests, assess infestation levels, and recommend specific treatment actions. Always be specific and actionable in your advice."
           },
-          ...messages,
+          ...transformedMessages,
         ],
         stream: true,
       }),

@@ -5,14 +5,18 @@ import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Sparkles, X, Send, Loader2, Paperclip, Volume2, VolumeX, Mic, MicOff } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
 
 type Message = {
   role: "user" | "assistant";
   content: string;
   attachments?: string[];
+  imageUrls?: string[];
 };
 
 export const AIChatWidget = () => {
+  const { user } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
@@ -126,20 +130,59 @@ export const AIChatWidget = () => {
     }
   };
 
+  const uploadAttachments = async (files: File[]): Promise<string[]> => {
+    if (!user) return [];
+    
+    const uploadedUrls: string[] = [];
+    
+    for (const file of files) {
+      try {
+        const fileExt = file.name.split('.').pop();
+        const fileName = `${user.id}/${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
+        
+        const { data, error } = await supabase.storage
+          .from('chat-attachments')
+          .upload(fileName, file);
+        
+        if (error) throw error;
+        
+        const { data: { publicUrl } } = supabase.storage
+          .from('chat-attachments')
+          .getPublicUrl(data.path);
+        
+        uploadedUrls.push(publicUrl);
+      } catch (error) {
+        console.error('Error uploading file:', error);
+        toast({
+          title: "Upload Error",
+          description: `Failed to upload ${file.name}`,
+          variant: "destructive",
+        });
+      }
+    }
+    
+    return uploadedUrls;
+  };
+
   const handleSend = async () => {
     if (!input.trim() || isLoading) return;
 
+    setIsLoading(true);
+    
+    // Upload attachments if any
+    const imageUrls = await uploadAttachments(attachments);
+    
     const attachmentNames = attachments.map(f => f.name);
     const userMessage: Message = { 
       role: "user", 
       content: input.trim(),
-      attachments: attachmentNames.length > 0 ? attachmentNames : undefined
+      attachments: attachmentNames.length > 0 ? attachmentNames : undefined,
+      imageUrls: imageUrls.length > 0 ? imageUrls : undefined
     };
     
     setMessages(prev => [...prev, userMessage]);
     setInput("");
     setAttachments([]);
-    setIsLoading(true);
 
     await streamChat(userMessage);
   };
@@ -153,15 +196,26 @@ export const AIChatWidget = () => {
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
-    if (files.length + attachments.length > 5) {
+    if (files.length + attachments.length > 3) {
       toast({
         title: "Too many files",
-        description: "You can only attach up to 5 files at once.",
+        description: "You can only attach up to 3 images at once.",
         variant: "destructive",
       });
       return;
     }
-    setAttachments([...attachments, ...files]);
+    
+    // Validate file types (images only)
+    const validFiles = files.filter(file => file.type.startsWith('image/'));
+    if (validFiles.length !== files.length) {
+      toast({
+        title: "Invalid file type",
+        description: "Only image files are supported for analysis.",
+        variant: "destructive",
+      });
+    }
+    
+    setAttachments([...attachments, ...validFiles]);
   };
 
   const removeAttachment = (index: number) => {
@@ -326,9 +380,21 @@ export const AIChatWidget = () => {
                         </button>
                       )}
                     </div>
+                    {msg.imageUrls && msg.imageUrls.length > 0 && (
+                      <div className="mt-2 flex flex-wrap gap-2">
+                        {msg.imageUrls.map((url, i) => (
+                          <img 
+                            key={i} 
+                            src={url} 
+                            alt={`Attachment ${i + 1}`}
+                            className="max-w-[200px] max-h-[200px] rounded border"
+                          />
+                        ))}
+                      </div>
+                    )}
                     {msg.attachments && msg.attachments.length > 0 && (
                       <div className="mt-2 text-xs opacity-70">
-                        📎 {msg.attachments.length} attachment(s)
+                        📎 {msg.attachments.length} image(s)
                       </div>
                     )}
                   </div>
