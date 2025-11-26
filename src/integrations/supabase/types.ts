@@ -14,6 +14,30 @@ export type Database = {
   }
   public: {
     Tables: {
+      agronomist_contacts: {
+        Row: {
+          contacted_at: string
+          created_at: string
+          farm_id: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          contacted_at?: string
+          created_at?: string
+          farm_id: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          contacted_at?: string
+          created_at?: string
+          farm_id?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       alerts: {
         Row: {
           alert_type: string

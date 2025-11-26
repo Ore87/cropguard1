@@ -3,12 +3,13 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Sparkles, X, Send, Loader2 } from "lucide-react";
+import { Sparkles, X, Send, Loader2, Paperclip, Volume2, VolumeX } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 type Message = {
   role: "user" | "assistant";
   content: string;
+  attachments?: string[];
 };
 
 export const AIChatWidget = () => {
@@ -16,7 +17,10 @@ export const AIChatWidget = () => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [attachments, setAttachments] = useState<File[]>([]);
+  const [isSpeaking, setIsSpeaking] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -137,6 +141,35 @@ export const AIChatWidget = () => {
     }
   };
 
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []);
+    if (files.length + attachments.length > 5) {
+      toast({
+        title: "Too many files",
+        description: "You can only attach up to 5 files at once.",
+        variant: "destructive",
+      });
+      return;
+    }
+    setAttachments([...attachments, ...files]);
+  };
+
+  const removeAttachment = (index: number) => {
+    setAttachments(attachments.filter((_, i) => i !== index));
+  };
+
+  const toggleTextToSpeech = (text: string) => {
+    if (isSpeaking) {
+      window.speechSynthesis.cancel();
+      setIsSpeaking(false);
+    } else {
+      const utterance = new SpeechSynthesisUtterance(text);
+      utterance.onend = () => setIsSpeaking(false);
+      window.speechSynthesis.speak(utterance);
+      setIsSpeaking(true);
+    }
+  };
+
   return (
     <>
       {/* Floating Button */}
@@ -193,7 +226,26 @@ export const AIChatWidget = () => {
                         : "bg-muted text-foreground"
                     }`}
                   >
-                    <p className="text-sm whitespace-pre-wrap">{msg.content}</p>
+                    <div className="flex items-start gap-2">
+                      <p className="text-sm whitespace-pre-wrap flex-1">{msg.content}</p>
+                      {msg.role === "assistant" && (
+                        <button
+                          onClick={() => toggleTextToSpeech(msg.content)}
+                          className="text-muted-foreground hover:text-foreground transition-colors"
+                        >
+                          {isSpeaking ? (
+                            <VolumeX className="h-4 w-4" />
+                          ) : (
+                            <Volume2 className="h-4 w-4" />
+                          )}
+                        </button>
+                      )}
+                    </div>
+                    {msg.attachments && msg.attachments.length > 0 && (
+                      <div className="mt-2 text-xs opacity-70">
+                        📎 {msg.attachments.length} attachment(s)
+                      </div>
+                    )}
                   </div>
                 </div>
               ))}
@@ -208,8 +260,42 @@ export const AIChatWidget = () => {
           </ScrollArea>
 
           {/* Input */}
-          <div className="p-4 border-t">
+          <div className="p-4 border-t space-y-2">
+            {attachments.length > 0 && (
+              <div className="flex flex-wrap gap-2 pb-2">
+                {attachments.map((file, index) => (
+                  <div
+                    key={index}
+                    className="flex items-center gap-1 bg-muted px-2 py-1 rounded text-xs"
+                  >
+                    <span className="truncate max-w-[100px]">{file.name}</span>
+                    <button
+                      onClick={() => removeAttachment(index)}
+                      className="text-muted-foreground hover:text-foreground"
+                    >
+                      <X className="h-3 w-3" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
             <div className="flex gap-2">
+              <input
+                ref={fileInputRef}
+                type="file"
+                multiple
+                onChange={handleFileChange}
+                className="hidden"
+                accept="image/*,.pdf,.doc,.docx,.txt"
+              />
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={isLoading}
+              >
+                <Paperclip className="h-4 w-4" />
+              </Button>
               <Input
                 value={input}
                 onChange={(e) => setInput(e.target.value)}

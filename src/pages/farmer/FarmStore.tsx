@@ -26,7 +26,7 @@ const products: Product[] = [
     seller: "Ogbomoso Agro Dealers Ltd",
     sellerPhone: "+2348012345678",
     sellerLocation: "8.1340,4.2560", // Ogbomoso coordinates
-    image: "https://images.unsplash.com/photo-1574943320219-553eb213f72d?w=400&h=300&fit=crop",
+    image: "https://images.unsplash.com/photo-1625246333195-78d9c38ad449?w=400&h=300&fit=crop&q=80",
   },
   {
     id: "2",
@@ -36,7 +36,7 @@ const products: Product[] = [
     seller: "Mama Bose Farm Supplies",
     sellerPhone: "+2348123456789",
     sellerLocation: "8.1340,4.2560",
-    image: "https://images.unsplash.com/photo-1625246333195-78d9c38ad449?w=400&h=300&fit=crop",
+    image: "https://images.unsplash.com/photo-1530836369250-ef72a3f5cda8?w=400&h=300&fit=crop&q=80",
   },
   {
     id: "3",
@@ -46,7 +46,7 @@ const products: Product[] = [
     seller: "Ibrahim Farm Tools & Equipment",
     sellerPhone: "+2348098765432",
     sellerLocation: "8.1340,4.2560",
-    image: "https://images.unsplash.com/photo-1416169607655-0c2b3ce2e1cc?w=400&h=300&fit=crop",
+    image: "https://images.unsplash.com/photo-1581092921461-eab62e97a780?w=400&h=300&fit=crop&q=80",
   },
   {
     id: "4",
@@ -56,7 +56,7 @@ const products: Product[] = [
     seller: "Kano Agricultural Center",
     sellerPhone: "+2347012345678",
     sellerLocation: "12.0022,8.5919", // Kano coordinates
-    image: "https://images.unsplash.com/photo-1586201375761-83865001e31c?w=400&h=300&fit=crop",
+    image: "https://images.unsplash.com/photo-1536304929831-99796327d485?w=400&h=300&fit=crop&q=80",
   },
   {
     id: "5",
@@ -76,7 +76,7 @@ const products: Product[] = [
     seller: "Abeokuta Equipment Store",
     sellerPhone: "+2348187654321",
     sellerLocation: "7.1475,3.3619", // Abeokuta coordinates
-    image: "https://images.unsplash.com/photo-1615671524827-c1fe3973b648?w=400&h=300&fit=crop",
+    image: "https://images.unsplash.com/photo-1566140967404-b8b3932483f5?w=400&h=300&fit=crop&q=80",
   },
   {
     id: "7",
@@ -86,7 +86,7 @@ const products: Product[] = [
     seller: "Ondo State Agro Ventures",
     sellerPhone: "+2347098765432",
     sellerLocation: "7.2502,5.1950", // Akure coordinates
-    image: "https://images.unsplash.com/photo-1601039641847-7857b994d704?w=400&h=300&fit=crop",
+    image: "https://images.unsplash.com/photo-1578849278619-e73505e9610f?w=400&h=300&fit=crop&q=80",
   },
   {
     id: "8",
@@ -146,7 +146,7 @@ const products: Product[] = [
     seller: "Sokoto Grains Cooperative",
     sellerPhone: "+2347076543210",
     sellerLocation: "13.0622,5.2339", // Sokoto coordinates
-    image: "https://images.unsplash.com/photo-1543257580-7269da773bf5?w=400&h=300&fit=crop",
+    image: "https://images.unsplash.com/photo-1574943320219-553eb213f72d?w=400&h=300&fit=crop&q=80",
   },
   {
     id: "14",
@@ -166,7 +166,7 @@ const products: Product[] = [
     seller: "Mama Bose Farm Tools",
     sellerPhone: "+2348123456789",
     sellerLocation: "8.1340,4.2560",
-    image: "https://images.unsplash.com/photo-1609885027264-4ee5ab0ebce6?w=400&h=300&fit=crop",
+    image: "https://images.unsplash.com/photo-1595521624992-48a59aff8950?w=400&h=300&fit=crop&q=80",
   },
 ];
 

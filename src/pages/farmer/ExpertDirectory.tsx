@@ -4,6 +4,9 @@ import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/componen
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { MapPin, Phone, Mail, MapPinned } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 import jonathanImage from "@/assets/experts/jonathan-katungu.png";
 import charityImage from "@/assets/experts/charity-irone.png";
 import adeniyiImage from "@/assets/experts/adeniyi-alagbe.png";
@@ -81,6 +84,38 @@ const experts = [
 ];
 
 const ExpertDirectory = () => {
+  const { user } = useAuth();
+  const { toast } = useToast();
+
+  const handleContactExpert = async (expertName: string) => {
+    if (!user) return;
+
+    // Get farm ID
+    const { data: farmData } = await supabase
+      .from('farms')
+      .select('id')
+      .eq('farmer_id', user.id)
+      .single();
+
+    if (!farmData) return;
+
+    // Record the contact
+    const { error } = await supabase
+      .from('agronomist_contacts')
+      .insert({
+        user_id: user.id,
+        farm_id: farmData.id
+      });
+
+    if (error) {
+      console.error('Error recording contact:', error);
+    } else {
+      toast({
+        title: "Contact Recorded",
+        description: `Your consultation with ${expertName} has been recorded.`,
+      });
+    }
+  };
 
   return (
     <Layout>
@@ -121,7 +156,10 @@ const ExpertDirectory = () => {
                   <Button 
                     className="flex-1"
                     variant="outline"
-                    onClick={() => window.open(`tel:${expert.phone}`)}
+                    onClick={() => {
+                      handleContactExpert(expert.name);
+                      window.open(`tel:${expert.phone}`);
+                    }}
                   >
                     <Phone className="h-4 w-4 mr-2" />
                     Call
@@ -129,7 +167,10 @@ const ExpertDirectory = () => {
                   <Button 
                     className="flex-1"
                     variant="outline"
-                    onClick={() => window.open(`mailto:${expert.email}`)}
+                    onClick={() => {
+                      handleContactExpert(expert.name);
+                      window.open(`mailto:${expert.email}`);
+                    }}
                   >
                     <Mail className="h-4 w-4 mr-2" />
                     Email
@@ -137,7 +178,10 @@ const ExpertDirectory = () => {
                 </div>
                 <Button 
                   className="w-full bg-primary hover:bg-primary/90"
-                  onClick={() => window.open(expert.mapLink, '_blank')}
+                  onClick={() => {
+                    handleContactExpert(expert.name);
+                    window.open(expert.mapLink, '_blank');
+                  }}
                 >
                   <MapPinned className="h-4 w-4 mr-2" />
                   View Address

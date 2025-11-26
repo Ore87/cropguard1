@@ -4,6 +4,20 @@ import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
 import { generateRecommendations, SensorData, WeatherData, PestReport, MarketData } from "@/utils/farmAdvisor";
 
+// Helper to check if user has contacted agronomist after the latest critical pest alert
+const checkAgronomistContact = async (userId: string, farmId: string, pestReportDate: string) => {
+  const { data } = await supabase
+    .from('agronomist_contacts')
+    .select('contacted_at')
+    .eq('user_id', userId)
+    .eq('farm_id', farmId)
+    .gte('contacted_at', pestReportDate)
+    .limit(1)
+    .maybeSingle();
+  
+  return !!data;
+};
+
 const fetchWeather = async () => {
   const response = await fetch(
     'https://api.open-meteo.com/v1/forecast?latitude=9.0820&longitude=8.6753&current=temperature_2m,relative_humidity_2m,weather_code&daily=temperature_2m_max,temperature_2m_min,weather_code&timezone=auto'
@@ -103,12 +117,40 @@ export const useFarmAdvisorStatus = () => {
     marketData || []
   ) : [];
 
-  const urgentCount = recommendations.filter(
-    rec => rec.urgency === 'critical' || rec.urgency === 'warning'
-  ).length;
+  // Check if user has contacted agronomist for critical pest issues
+  const [hasContactedAgronomist, setHasContactedAgronomist] = useState(false);
+
+  useEffect(() => {
+    const checkContact = async () => {
+      if (!user || !farmId || !pestReport || !enabled) return;
+      
+      // Only check if there's a critical pest issue
+      const hasCriticalPest = recommendations.some(
+        r => r.urgency === 'critical' && r.id === 'critical-pest'
+      );
+      
+      if (hasCriticalPest) {
+        const contacted = await checkAgronomistContact(
+          user.id, 
+          farmId, 
+          pestReport.analyzed_at
+        );
+        setHasContactedAgronomist(contacted);
+      } else {
+        setHasContactedAgronomist(false);
+      }
+    };
+    
+    checkContact();
+  }, [user, farmId, pestReport, recommendations, enabled]);
+
+  const criticalRecommendations = recommendations.filter(r => r.urgency === 'critical');
+  
+  // Only show notification badge if there are critical issues AND user hasn't contacted agronomist
+  const shouldShowNotification = criticalRecommendations.length > 0 && !hasContactedAgronomist;
 
   return {
-    hasUrgentRecommendations: urgentCount > 0,
-    urgentCount,
+    hasUrgentRecommendations: shouldShowNotification,
+    urgentCount: shouldShowNotification ? criticalRecommendations.length : 0,
   };
 };
