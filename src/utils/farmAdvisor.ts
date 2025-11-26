@@ -142,7 +142,7 @@ export const generateRecommendations = (
     recommendations.push({
       id: 'critical-pest',
       title: '🐛 URGENT: Critical Pest Infestation',
-      message: 'Critical pest levels detected. Immediate intervention required. <a href="/expert-directory" class="text-primary underline hover:text-primary/80">Consult with an agronomist</a> for treatment recommendations.',
+      message: 'Critical pest levels detected. Immediate intervention required. <a href="/expert-directory" class="text-primary underline hover:text-primary/80" data-dismiss-alert="critical-pest">Consult with an agronomist</a> for treatment recommendations.',
       urgency: 'critical',
       category: 'Pest Management'
     });
