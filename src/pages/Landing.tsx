@@ -1,6 +1,8 @@
 import { Link } from "react-router-dom";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { 
   Leaf, 
   Shield, 
@@ -23,6 +25,8 @@ import {
 } from "lucide-react";
 
 const Landing = () => {
+  const [isVideoOpen, setIsVideoOpen] = useState(false);
+
   return (
     <div className="min-h-screen bg-background">
       {/* Hero Header */}
@@ -65,7 +69,12 @@ const Landing = () => {
                 Start Protecting Your Crops
               </Button>
             </Link>
-            <Button size="lg" variant="outline" className="h-14 px-8 text-lg gap-2">
+            <Button 
+              size="lg" 
+              variant="outline" 
+              className="h-14 px-8 text-lg gap-2"
+              onClick={() => setIsVideoOpen(true)}
+            >
               <Eye className="h-5 w-5" />
               Watch Demo
             </Button>
@@ -326,11 +335,26 @@ const Landing = () => {
           </div>
         </div>
       </footer>
+
+      {/* Video Demo Modal */}
+      <Dialog open={isVideoOpen} onOpenChange={setIsVideoOpen}>
+        <DialogContent className="max-w-4xl p-0">
+          <div className="relative w-full" style={{ paddingBottom: '56.25%' }}>
+            <iframe
+              className="absolute top-0 left-0 w-full h-full rounded-lg"
+              src="https://www.youtube.com/embed/06l9CBC0VVE?autoplay=1"
+              title="CropGuard Demo Video"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+              allowFullScreen
+            />
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
 
-const FeatureCard = ({ icon, title, description }: { 
+const FeatureCard = ({ icon, title, description }: {
   icon: React.ReactNode; 
   title: string; 
   description: string;
