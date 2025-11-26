@@ -126,9 +126,16 @@ export const AIChatWidget = () => {
   const handleSend = async () => {
     if (!input.trim() || isLoading) return;
 
-    const userMessage: Message = { role: "user", content: input.trim() };
+    const attachmentNames = attachments.map(f => f.name);
+    const userMessage: Message = { 
+      role: "user", 
+      content: input.trim(),
+      attachments: attachmentNames.length > 0 ? attachmentNames : undefined
+    };
+    
     setMessages(prev => [...prev, userMessage]);
     setInput("");
+    setAttachments([]);
     setIsLoading(true);
 
     await streamChat(userMessage);
