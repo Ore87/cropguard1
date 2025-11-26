@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Sparkles, X, Send, Loader2, Paperclip, Volume2, VolumeX } from "lucide-react";
+import { Sparkles, X, Send, Loader2, Paperclip, Volume2, VolumeX, Mic, MicOff } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 type Message = {
@@ -19,8 +19,11 @@ export const AIChatWidget = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [attachments, setAttachments] = useState<File[]>([]);
   const [isSpeaking, setIsSpeaking] = useState(false);
+  const [isRecording, setIsRecording] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const audioChunksRef = useRef<Blob[]>([]);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -177,6 +180,81 @@ export const AIChatWidget = () => {
     }
   };
 
+  const startRecording = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const mediaRecorder = new MediaRecorder(stream);
+      mediaRecorderRef.current = mediaRecorder;
+      audioChunksRef.current = [];
+
+      mediaRecorder.ondataavailable = (event) => {
+        if (event.data.size > 0) {
+          audioChunksRef.current.push(event.data);
+        }
+      };
+
+      mediaRecorder.onstop = async () => {
+        const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
+        await transcribeAudio(audioBlob);
+        stream.getTracks().forEach(track => track.stop());
+      };
+
+      mediaRecorder.start();
+      setIsRecording(true);
+    } catch (error) {
+      console.error('Error starting recording:', error);
+      toast({
+        title: "Microphone Error",
+        description: "Could not access microphone. Please check permissions.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const stopRecording = () => {
+    if (mediaRecorderRef.current && isRecording) {
+      mediaRecorderRef.current.stop();
+      setIsRecording(false);
+    }
+  };
+
+  const transcribeAudio = async (audioBlob: Blob) => {
+    try {
+      const reader = new FileReader();
+      reader.readAsDataURL(audioBlob);
+      
+      reader.onloadend = async () => {
+        const base64Audio = (reader.result as string).split(',')[1];
+        
+        const response = await fetch(
+          `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/speech-to-text`,
+          {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+            },
+            body: JSON.stringify({ audio: base64Audio }),
+          }
+        );
+
+        if (!response.ok) {
+          throw new Error('Transcription failed');
+        }
+
+        const { text } = await response.json();
+        setInput(text);
+      };
+    } catch (error) {
+      console.error('Transcription error:', error);
+      toast({
+        title: "Transcription Error",
+        description: "Could not convert speech to text. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
   return (
     <>
       {/* Floating Button */}
@@ -299,16 +377,27 @@ export const AIChatWidget = () => {
                 variant="outline"
                 size="icon"
                 onClick={() => fileInputRef.current?.click()}
-                disabled={isLoading}
+                disabled={isLoading || isRecording}
+                aria-label="Attach file"
               >
                 <Paperclip className="h-4 w-4" />
+              </Button>
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={isRecording ? stopRecording : startRecording}
+                disabled={isLoading}
+                className={isRecording ? "bg-destructive text-destructive-foreground hover:bg-destructive/90" : ""}
+                aria-label={isRecording ? "Stop recording" : "Start recording"}
+              >
+                {isRecording ? <MicOff className="h-4 w-4" /> : <Mic className="h-4 w-4" />}
               </Button>
               <Input
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 onKeyPress={handleKeyPress}
-                placeholder="Type your message..."
-                disabled={isLoading}
+                placeholder={isRecording ? "Recording..." : "Type your message..."}
+                disabled={isLoading || isRecording}
                 className="flex-1"
               />
               <Button

@@ -18,6 +18,25 @@ const FarmAdvisor = () => {
   const { user } = useAuth();
   const [farmId, setFarmId] = useState<string | null>(null);
 
+  // Handle clicks on "Consult with an agronomist" link to dismiss alert
+  useEffect(() => {
+    const handleLinkClick = (e: MouseEvent) => {
+      const target = e.target as HTMLElement;
+      const link = target.closest('a[data-dismiss-alert]');
+      
+      if (link) {
+        const alertId = link.getAttribute('data-dismiss-alert');
+        if (alertId) {
+          // Store in localStorage that user acknowledged this alert
+          localStorage.setItem(`alert-dismissed-${alertId}`, Date.now().toString());
+        }
+      }
+    };
+
+    document.addEventListener('click', handleLinkClick);
+    return () => document.removeEventListener('click', handleLinkClick);
+  }, []);
+
   // Fetch farm ID
   useEffect(() => {
     const getFarmId = async () => {

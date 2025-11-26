@@ -146,11 +146,17 @@ export const useFarmAdvisorStatus = () => {
 
   const criticalRecommendations = recommendations.filter(r => r.urgency === 'critical');
   
-  // Only show notification badge if there are critical issues AND user hasn't contacted agronomist
-  const shouldShowNotification = criticalRecommendations.length > 0 && !hasContactedAgronomist;
+  // Check if user has dismissed the critical pest alert
+  const alertDismissed = localStorage.getItem('alert-dismissed-critical-pest');
+  const pestReportTime = pestReport?.analyzed_at ? new Date(pestReport.analyzed_at).getTime() : 0;
+  const dismissedTime = alertDismissed ? parseInt(alertDismissed) : 0;
+  
+  // Show notification only if there's a critical pest AND (alert was never dismissed OR new report after dismissal)
+  const hasCriticalPest = criticalRecommendations.some(r => r.id === 'critical-pest');
+  const shouldShowNotification = hasCriticalPest && pestReportTime > dismissedTime;
 
   return {
     hasUrgentRecommendations: shouldShowNotification,
-    urgentCount: shouldShowNotification ? criticalRecommendations.length : 0,
+    urgentCount: shouldShowNotification ? 1 : 0,
   };
 };
