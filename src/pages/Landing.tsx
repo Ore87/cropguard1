@@ -36,7 +36,7 @@ const Landing = () => {
             <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary">
               <Leaf className="h-6 w-6 text-primary-foreground" />
             </div>
-            <h1 className="text-2xl font-bold text-foreground">CropGuard</h1>
+            <h1 className="text-2xl font-bold text-foreground">KwaVest</h1>
           </div>
           <Link to="/auth">
             <Button size="lg" className="gap-2">
@@ -199,7 +199,7 @@ const Landing = () => {
         <div className="container mx-auto px-6">
           <div className="text-center mb-16">
             <h3 className="text-3xl md:text-4xl font-bold text-foreground mb-4">
-              How CropGuard Works
+              How KwaVest Works
             </h3>
             <p className="text-lg text-muted-foreground max-w-3xl mx-auto">
               Three simple steps to total farm intelligence
@@ -215,7 +215,7 @@ const Landing = () => {
                 Monitor Continuously
               </h4>
               <p className="text-muted-foreground">
-                Connect IoT sensors and access live weather data. CropGuard tracks your farm's conditions in real-time, 24/7.
+                Connect IoT sensors and access live weather data. KwaVest tracks your farm's conditions in real-time, 24/7.
               </p>
             </div>
             <div className="text-center">
@@ -327,10 +327,11 @@ const Landing = () => {
               <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary">
                 <Leaf className="h-6 w-6 text-primary-foreground" />
               </div>
-              <span className="text-xl font-bold text-foreground">CropGuard</span>
+              <span className="text-xl font-bold text-foreground">KwaVest</span>
+              <span className="text-sm text-muted-foreground">Smart Agricultural Intelligence</span>
             </div>
-            <p className="text-muted-foreground">
-              &copy; 2025 CropGuard. Protecting harvests with intelligent technology.
+            <p className="text-sm text-muted-foreground">
+              &copy; 2025 KwaVest. Protecting harvests with intelligent technology.
             </p>
           </div>
         </div>
@@ -343,7 +344,7 @@ const Landing = () => {
             <iframe
               className="absolute top-0 left-0 w-full h-full rounded-lg"
               src="https://www.youtube.com/embed/06l9CBC0VVE?autoplay=1"
-              title="CropGuard Demo Video"
+              title="KwaVest Demo Video"
               allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
               allowFullScreen
             />
