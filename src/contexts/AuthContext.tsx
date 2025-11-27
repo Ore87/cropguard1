@@ -29,7 +29,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   // Session timeout configuration (1 hour of inactivity)
   const INACTIVITY_TIMEOUT = 60 * 60 * 1000; // 1 hour in milliseconds
-  const LAST_ACTIVITY_KEY = 'cropguard_last_activity';
+  const LAST_ACTIVITY_KEY = 'kwavest_last_activity';
 
   // Check if session has expired due to inactivity
   const checkSessionTimeout = () => {

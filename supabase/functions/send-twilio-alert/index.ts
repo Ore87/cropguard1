@@ -78,7 +78,7 @@ const handler = async (req: Request): Promise<Response> => {
       const twimlMessage = `
         <Response>
           <Say voice="alice">
-            Critical Alert from CropGuard AI. 
+            Critical Alert from KwaVest AI. 
             ${pestType ? `${pestType} detected with ${infestationLevel} infestation level.` : ''}
             ${message}
             Please check your dashboard immediately for details.
