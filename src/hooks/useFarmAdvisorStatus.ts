@@ -144,6 +144,46 @@ export const useFarmAdvisorStatus = () => {
     checkContact();
   }, [user, farmId, pestReport, recommendations, enabled]);
 
+  // Send Twilio alert for critical pest detections
+  useEffect(() => {
+    const sendTwilioAlert = async () => {
+      if (!farmId || !pestReport || !enabled) return;
+
+      const criticalPest = recommendations.find(r => r.urgency === 'critical' && r.id === 'critical-pest');
+      if (!criticalPest) return;
+
+      // Check if we've already sent an alert for this specific report
+      const alertKey = `twilio-alert-sent-${pestReport.analyzed_at}`;
+      if (localStorage.getItem(alertKey)) return;
+
+      try {
+        console.log('Sending Twilio alert for critical pest detection...');
+        
+        const { error } = await supabase.functions.invoke('send-twilio-alert', {
+          body: {
+            to: '+2349024324733',
+            message: `URGENT: ${criticalPest.message}`,
+            alertType: 'sms',
+            pestType: pestReport.infestation_level,
+            infestationLevel: pestReport.infestation_level,
+          },
+        });
+
+        if (error) {
+          console.error('Failed to send Twilio alert:', error);
+        } else {
+          console.log('Twilio alert sent successfully');
+          // Mark this alert as sent
+          localStorage.setItem(alertKey, Date.now().toString());
+        }
+      } catch (error) {
+        console.error('Error sending Twilio alert:', error);
+      }
+    };
+
+    sendTwilioAlert();
+  }, [farmId, pestReport, recommendations, enabled]);
+
   const criticalRecommendations = recommendations.filter(r => r.urgency === 'critical');
   
   // Check if user has dismissed the critical pest alert
