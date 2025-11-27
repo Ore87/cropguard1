@@ -98,10 +98,10 @@ const ReportDetails = () => {
             <CardContent className="flex flex-col items-center justify-center py-12">
               <AlertCircle className="h-16 w-16 text-muted-foreground mb-4" />
               <p className="text-lg text-muted-foreground mb-4">Report not found</p>
-              <Link to="/farmer/analysis">
+              <Link to="/analysis">
                 <Button>
                   <ArrowLeft className="mr-2 h-4 w-4" />
-                  Back to Reports
+                  Back to Report History
                 </Button>
               </Link>
             </CardContent>
@@ -116,10 +116,10 @@ const ReportDetails = () => {
       <div className="p-8">
         <div className="mb-6 flex items-center justify-between">
           <div className="flex items-center gap-4">
-            <Link to="/farmer/analysis">
+            <Link to="/analysis">
               <Button variant="outline" size="sm">
                 <ArrowLeft className="mr-2 h-4 w-4" />
-                Back to Reports
+                Back to Report History
               </Button>
             </Link>
             <h1 className="text-3xl font-bold text-foreground">Analysis Report</h1>

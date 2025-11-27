@@ -290,11 +290,11 @@ const Dashboard = () => {
                         {latestScan.infestation_level?.toUpperCase() || "UNKNOWN"} Infestation
                       </Badge>
                     </div>
-                    <div className="flex gap-2">
-                      <Button size="sm" variant="outline" onClick={() => navigate("/upload?type=spot_check")}>
-                        New Spot Check
+                    <div className="flex gap-2 w-full">
+                      <Button size="sm" variant="outline" className="flex-1" onClick={() => navigate("/upload?type=spot_check")}>
+                        Spot Check
                       </Button>
-                      <Button size="sm" variant="outline" onClick={() => navigate("/upload?type=drone_flight")}>
+                      <Button size="sm" variant="outline" className="flex-1" onClick={() => navigate("/upload?type=drone_flight")}>
                         Drone Flight
                       </Button>
                     </div>
