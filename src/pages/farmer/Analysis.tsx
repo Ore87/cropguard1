@@ -180,7 +180,7 @@ const Analysis = () => {
               <AlertCircle className="h-16 w-16 text-muted-foreground mb-4" />
               <h3 className="text-xl font-semibold text-foreground mb-2">No Reports Yet</h3>
               <p className="text-muted-foreground text-center max-w-md">
-                Upload images from the Data Collection page to see AI-powered pest detection results here.
+                Upload images from the Scan for Pests page to see AI-powered pest detection results here.
               </p>
             </CardContent>
           </Card>
