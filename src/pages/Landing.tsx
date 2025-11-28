@@ -59,8 +59,7 @@ const Landing = () => {
             <span className="text-primary">In Real-Time</span>
           </h2>
           <p className="mx-auto mb-10 max-w-3xl text-xl text-muted-foreground">
-            Monitor environmental conditions, detect pests instantly with AI, track market trends, 
-            and receive intelligent recommendations—all unified in a single, powerful dashboard.
+            Secure your harvest by monitoring real-time environmental conditions, detecting pests instantly with AI, tracking market trends, and receiving intelligent recommendations, all unified in a single powerful dashboard.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
             <Link to="/auth">
