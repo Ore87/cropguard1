@@ -23,7 +23,7 @@ const TermsOfService = () => {
             <section>
               <h2 className="text-xl font-semibold mb-3">1. Acceptance of Terms</h2>
               <p className="text-muted-foreground">
-                By accessing and using KwaVest ("the Service"), you accept and agree to be bound by the terms and 
+                By accessing and using CropGuard ("the Service"), you accept and agree to be bound by the terms and 
                 provision of this agreement. If you do not agree to these terms, please do not use the Service.
               </p>
             </section>
@@ -31,7 +31,7 @@ const TermsOfService = () => {
             <section>
               <h2 className="text-xl font-semibold mb-3">2. Description of Service</h2>
               <p className="text-muted-foreground">
-                KwaVest provides agricultural pest detection, farm management, weather monitoring, and advisory 
+                CropGuard provides agricultural pest detection, farm management, weather monitoring, and advisory 
                 services to farmers and agronomists. The Service includes AI-powered image analysis, sensor data 
                 monitoring, expert consultations, and market information.
               </p>
@@ -61,7 +61,7 @@ const TermsOfService = () => {
             <section>
               <h2 className="text-xl font-semibold mb-3">5. Data Accuracy and Disclaimers</h2>
               <p className="text-muted-foreground">
-                While we strive to provide accurate pest detection and agricultural advice, KwaVest's AI analysis 
+                While we strive to provide accurate pest detection and agricultural advice, CropGuard's AI analysis 
                 and recommendations are provided "as is" without warranties. The Service should be used as a tool 
                 to assist decision-making, not as the sole basis for agricultural decisions. Users should verify 
                 information and consult with local agricultural experts when necessary.
@@ -71,7 +71,7 @@ const TermsOfService = () => {
             <section>
               <h2 className="text-xl font-semibold mb-3">6. Intellectual Property</h2>
               <p className="text-muted-foreground">
-                The Service and its original content, features, and functionality are owned by KwaVest and are 
+                The Service and its original content, features, and functionality are owned by CropGuard and are 
                 protected by international copyright, trademark, patent, trade secret, and other intellectual 
                 property laws. You retain ownership of content you upload but grant us a license to use it for 
                 providing and improving the Service.
@@ -90,7 +90,7 @@ const TermsOfService = () => {
             <section>
               <h2 className="text-xl font-semibold mb-3">8. Limitation of Liability</h2>
               <p className="text-muted-foreground">
-                KwaVest shall not be liable for any indirect, incidental, special, consequential, or punitive 
+                CropGuard shall not be liable for any indirect, incidental, special, consequential, or punitive 
                 damages resulting from your use of or inability to use the Service. Our total liability shall not 
                 exceed the amount you paid for the Service in the past 12 months.
               </p>
@@ -117,14 +117,14 @@ const TermsOfService = () => {
               <h2 className="text-xl font-semibold mb-3">11. Governing Law</h2>
               <p className="text-muted-foreground">
                 These Terms shall be governed by and construed in accordance with the laws of the jurisdiction in 
-                which KwaVest operates, without regard to its conflict of law provisions.
+                which CropGuard operates, without regard to its conflict of law provisions.
               </p>
             </section>
 
             <section>
               <h2 className="text-xl font-semibold mb-3">12. Contact Information</h2>
               <p className="text-muted-foreground">
-                If you have any questions about these Terms, please contact us at: support@kwavest.com
+                If you have any questions about these Terms, please contact us at: support@cropguard.com
               </p>
             </section>
 

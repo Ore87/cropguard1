@@ -324,7 +324,7 @@ export const AIChatWidget = () => {
           <div className="flex items-center justify-between p-4 border-b bg-primary text-primary-foreground rounded-t-lg">
             <div className="flex items-center gap-2">
               <Sparkles className="h-5 w-5" />
-              <h3 className="font-semibold">KwaVest AI Assistant</h3>
+              <h3 className="font-semibold">CropGuard AI Assistant</h3>
             </div>
             <Button
               variant="ghost"
