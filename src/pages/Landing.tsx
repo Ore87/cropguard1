@@ -353,7 +353,7 @@ const Landing = () => {
           <div className="relative w-full" style={{ paddingBottom: '56.25%' }}>
             <iframe
               className="absolute top-0 left-0 w-full h-full rounded-lg"
-              src="https://www.youtube.com/embed/06l9CBC0VVE?autoplay=1"
+              src="https://www.youtube.com/embed/KAD1Di2HJHk?autoplay=1"
               title="KwaVest Demo Video"
               allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
               allowFullScreen
