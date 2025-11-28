@@ -41,6 +41,11 @@ const createAlertIfNeeded = async (reportId: string, scanType: string) => {
 
       if (alertError) {
         console.error('Error creating alert:', alertError);
+      } else if (report.infestation_level === 'HIGH') {
+        // Show simulated n8n workflow notification for HIGH severity alerts
+        toast.info('⚡ Simulated: SMS notification triggered via n8n workflow.', {
+          duration: 5000,
+        });
       }
     }
   } catch (error) {
