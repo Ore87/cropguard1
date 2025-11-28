@@ -37,7 +37,7 @@ const Landing = () => {
             <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary">
               <Leaf className="h-6 w-6 text-primary-foreground" />
             </div>
-            <h1 className="text-2xl font-bold text-foreground">KwaVest</h1>
+            <h1 className="text-2xl font-bold text-foreground">CropGuard</h1>
           </div>
           <Link to="/auth">
             <Button size="lg" className="gap-2">
@@ -337,11 +337,11 @@ const Landing = () => {
               <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary">
                 <Leaf className="h-6 w-6 text-primary-foreground" />
               </div>
-              <span className="text-xl font-bold text-foreground">KwaVest</span>
+              <span className="text-xl font-bold text-foreground">CropGuard</span>
               <span className="text-sm text-muted-foreground">Smart Agricultural Intelligence</span>
             </div>
             <p className="text-sm text-muted-foreground">
-              &copy; 2025 KwaVest. Protecting harvests with intelligent technology.
+              &copy; 2025 CropGuard. Protecting harvests with intelligent technology.
             </p>
           </div>
         </div>
@@ -354,7 +354,7 @@ const Landing = () => {
             <iframe
               className="absolute top-0 left-0 w-full h-full rounded-lg"
               src="https://www.youtube.com/embed/KAD1Di2HJHk?autoplay=1"
-              title="KwaVest Demo Video"
+              title="CropGuard Demo Video"
               allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
               allowFullScreen
             />

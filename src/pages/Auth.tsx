@@ -125,7 +125,7 @@ const Auth = () => {
           <div className="mb-4 flex justify-center">
             <Leaf className="h-12 w-12" style={{ color: '#00B050' }} />
           </div>
-          <CardTitle className="text-3xl">KwaVest</CardTitle>
+          <CardTitle className="text-3xl">CropGuard</CardTitle>
           <CardDescription>Sign in or create your account</CardDescription>
         </CardHeader>
         <CardContent>
