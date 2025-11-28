@@ -49,49 +49,45 @@ const Landing = () => {
       </header>
 
       {/* Hero Section */}
-      <section className="py-24 bg-background">
-        <div className="container mx-auto px-6">
-          <div className="grid md:grid-cols-2 gap-12 items-center">
-            {/* Left Column - Text Content */}
-            <div className="text-left">
-              <div className="inline-flex items-center gap-2 rounded-full bg-primary/10 px-4 py-2 mb-6">
-                <Brain className="h-4 w-4 text-primary" />
-                <span className="text-sm font-medium text-primary">AI-Powered Farm Intelligence</span>
-              </div>
-              <h2 className="mb-6 text-5xl md:text-6xl font-bold text-foreground">
-                Complete Farm Intelligence<br />
-                <span className="text-primary">In Real-Time</span>
-              </h2>
-              <p className="mb-10 text-xl text-muted-foreground">
-                Secure your harvest by monitoring real-time environmental conditions, detecting pests instantly with AI, tracking market trends, and receiving intelligent recommendations, all unified in a single powerful dashboard.
-              </p>
-              <div className="flex flex-col sm:flex-row gap-4">
-                <Link to="/auth">
-                  <Button size="lg" className="h-14 px-8 text-lg gap-2">
-                    <Target className="h-5 w-5" />
-                    Start Protecting Your Crops
-                  </Button>
-                </Link>
-                <Button 
-                  size="lg" 
-                  variant="outline" 
-                  className="h-14 px-8 text-lg gap-2"
-                  onClick={() => setIsVideoOpen(true)}
-                >
-                  <Eye className="h-5 w-5" />
-                  Watch Demo
-                </Button>
-              </div>
-            </div>
-            
-            {/* Right Column - Image */}
-            <div className="relative">
-              <img 
-                src={heroBackground} 
-                alt="Modern farm field with AI technology overlay showing drone and data networks" 
-                className="w-full h-auto rounded-lg shadow-2xl"
-              />
-            </div>
+      <section 
+        className="relative overflow-hidden py-24" 
+        style={{
+          backgroundImage: `url(${heroBackground})`,
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+        }}
+      >
+        {/* Semi-transparent white overlay for readability */}
+        <div className="absolute inset-0 bg-white/80 z-0"></div>
+        
+        <div className="container mx-auto px-6 text-center relative z-10">
+          <div className="inline-flex items-center gap-2 rounded-full bg-primary/10 px-4 py-2 mb-6">
+            <Brain className="h-4 w-4 text-primary" />
+            <span className="text-sm font-medium text-primary">AI-Powered Farm Intelligence</span>
+          </div>
+          <h2 className="mb-6 text-5xl md:text-6xl font-bold text-foreground">
+            Complete Farm Intelligence<br />
+            <span className="text-primary">In Real-Time</span>
+          </h2>
+          <p className="mx-auto mb-10 max-w-3xl text-xl text-muted-foreground">
+            Secure your harvest by monitoring real-time environmental conditions, detecting pests instantly with AI, tracking market trends, and receiving intelligent recommendations, all unified in a single powerful dashboard.
+          </p>
+          <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
+            <Link to="/auth">
+              <Button size="lg" className="h-14 px-8 text-lg gap-2">
+                <Target className="h-5 w-5" />
+                Start Protecting Your Crops
+              </Button>
+            </Link>
+            <Button 
+              size="lg" 
+              variant="outline" 
+              className="h-14 px-8 text-lg gap-2"
+              onClick={() => setIsVideoOpen(true)}
+            >
+              <Eye className="h-5 w-5" />
+              Watch Demo
+            </Button>
           </div>
         </div>
       </section>
