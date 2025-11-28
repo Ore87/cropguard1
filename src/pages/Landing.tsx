@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
+import heroBackground from "@/assets/hero-farm-background.jpg";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { 
@@ -48,8 +49,18 @@ const Landing = () => {
       </header>
 
       {/* Hero Section */}
-      <section className="relative overflow-hidden bg-gradient-to-b from-primary/5 to-background py-24">
-        <div className="container mx-auto px-6 text-center">
+      <section 
+        className="relative overflow-hidden py-24" 
+        style={{
+          backgroundImage: `url(${heroBackground})`,
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+        }}
+      >
+        {/* Semi-transparent white overlay for readability */}
+        <div className="absolute inset-0 bg-white/80 z-0"></div>
+        
+        <div className="container mx-auto px-6 text-center relative z-10">
           <div className="inline-flex items-center gap-2 rounded-full bg-primary/10 px-4 py-2 mb-6">
             <Brain className="h-4 w-4 text-primary" />
             <span className="text-sm font-medium text-primary">AI-Powered Farm Intelligence</span>
