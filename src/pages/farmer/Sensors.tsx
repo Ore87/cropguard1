@@ -1,13 +1,9 @@
 import { useEffect, useState } from "react";
 import { Layout } from "@/components/Layout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
-import { Play, Square } from "lucide-react";
-import { toast } from "sonner";
-import { checkAndCreateSensorAlerts } from "@/utils/sensorAlerts";
 
 interface SensorReading {
   recorded_at: string;
@@ -21,7 +17,6 @@ const Sensors = () => {
   const { user } = useAuth();
   const [farmId, setFarmId] = useState<string | null>(null);
   const [sensorData, setSensorData] = useState<SensorReading[]>([]);
-  const [isSimulating, setIsSimulating] = useState(false);
   const [currentValues, setCurrentValues] = useState({
     soil_moisture: 0,
     temperature: 0,
@@ -34,18 +29,36 @@ const Sensors = () => {
   }, [user]);
 
   useEffect(() => {
-    let interval: NodeJS.Timeout;
-    
-    if (isSimulating) {
-      interval = setInterval(() => {
-        simulateSensorData();
-      }, 5000);
-    }
+    if (!farmId) return;
+
+    // Subscribe to real-time sensor data updates
+    const channel = supabase
+      .channel('sensor-data-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'sensor_data',
+          filter: `farm_id=eq.${farmId}`
+        },
+        (payload) => {
+          const newReading = payload.new as SensorReading;
+          setSensorData(prev => [...prev.slice(-19), newReading]);
+          setCurrentValues({
+            soil_moisture: newReading.soil_moisture || 0,
+            temperature: newReading.temperature || 0,
+            humidity: newReading.humidity || 0,
+            light_intensity: newReading.light_intensity || 0,
+          });
+        }
+      )
+      .subscribe();
 
     return () => {
-      if (interval) clearInterval(interval);
+      supabase.removeChannel(channel);
     };
-  }, [isSimulating, farmId]);
+  }, [farmId]);
 
   const fetchFarmAndData = async () => {
     if (!user) return;
@@ -97,46 +110,6 @@ const Sensors = () => {
     }
   };
 
-  const simulateSensorData = async () => {
-    if (!farmId) return;
-
-    const newData = {
-      soil_moisture: Number((45 + Math.random() * 20).toFixed(2)),
-      temperature: Number((20 + Math.random() * 15).toFixed(2)),
-      humidity: Number((60 + Math.random() * 20).toFixed(2)),
-      light_intensity: Number((5000 + Math.random() * 10000).toFixed(0)),
-    };
-
-    try {
-      const { data, error } = await supabase
-        .from("sensor_data")
-        .insert({
-          farm_id: farmId,
-          ...newData,
-        })
-        .select()
-        .single();
-
-      if (error) throw error;
-
-      setCurrentValues(newData);
-      setSensorData(prev => [...prev.slice(-19), data]);
-
-      // Check and create alerts based on sensor values
-      await checkAndCreateSensorAlerts(farmId, newData);
-    } catch (error) {
-      console.error("Error simulating data:", error);
-    }
-  };
-
-  const toggleSimulation = () => {
-    if (!isSimulating) {
-      toast.success("IoT simulation started");
-    } else {
-      toast.info("IoT simulation stopped");
-    }
-    setIsSimulating(!isSimulating);
-  };
 
   const chartData = sensorData.map(reading => ({
     time: new Date(reading.recorded_at).toLocaleTimeString(),
@@ -146,12 +119,9 @@ const Sensors = () => {
   return (
     <Layout>
       <div className="p-8">
-        <div className="mb-6 flex items-center justify-between">
-          <h1 className="text-3xl font-bold text-foreground">Sensor Data (IoT Monitor)</h1>
-          <Button onClick={toggleSimulation} variant={isSimulating ? "destructive" : "default"}>
-            {isSimulating ? <Square className="mr-2 h-4 w-4" /> : <Play className="mr-2 h-4 w-4" />}
-            {isSimulating ? "Stop Simulation" : "Simulate IoT Data"}
-          </Button>
+        <div className="mb-6">
+          <h1 className="text-3xl font-bold text-foreground">Sensor Data (ESP32 Live Feed)</h1>
+          <p className="text-muted-foreground mt-2">Real-time data from your ESP32 device</p>
         </div>
 
         <div className="grid gap-6 lg:grid-cols-2">
