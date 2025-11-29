@@ -6,12 +6,14 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
-import { User } from "lucide-react";
+import { User, Copy, Check } from "lucide-react";
 import { toast } from "sonner";
 
 const Profile = () => {
   const { user } = useAuth();
   const [loading, setLoading] = useState(false);
+  const [farmId, setFarmId] = useState<string>("");
+  const [copied, setCopied] = useState(false);
   const [profile, setProfile] = useState({
     full_name: "",
     email: "",
@@ -21,6 +23,7 @@ const Profile = () => {
 
   useEffect(() => {
     fetchProfile();
+    fetchFarmId();
   }, [user]);
 
   const fetchProfile = async () => {
@@ -43,6 +46,33 @@ const Profile = () => {
       }
     } catch (error) {
       console.error("Error fetching profile:", error);
+    }
+  };
+
+  const fetchFarmId = async () => {
+    if (!user) return;
+
+    try {
+      const { data } = await supabase
+        .from("farms")
+        .select("id")
+        .eq("farmer_id", user.id)
+        .single();
+
+      if (data) {
+        setFarmId(data.id);
+      }
+    } catch (error) {
+      console.error("Error fetching farm ID:", error);
+    }
+  };
+
+  const copyFarmId = () => {
+    if (farmId) {
+      navigator.clipboard.writeText(farmId);
+      setCopied(true);
+      toast.success("Farm ID copied to clipboard!");
+      setTimeout(() => setCopied(false), 2000);
     }
   };
 
@@ -78,12 +108,43 @@ const Profile = () => {
           <h1 className="text-3xl font-bold text-foreground">Profile Settings</h1>
         </div>
 
-        <Card className="max-w-2xl">
-          <CardHeader>
-            <CardTitle>Personal Information</CardTitle>
-            <CardDescription>Update your profile details and farm location</CardDescription>
-          </CardHeader>
-          <CardContent>
+        <div className="space-y-6 max-w-2xl">
+          {farmId && (
+            <Card>
+              <CardHeader>
+                <CardTitle>Farm ID</CardTitle>
+                <CardDescription>Use this ID for ESP32/IoT device integration</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="flex items-center gap-2">
+                  <Input
+                    value={farmId}
+                    readOnly
+                    className="bg-muted font-mono text-sm"
+                  />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="icon"
+                    onClick={copyFarmId}
+                  >
+                    {copied ? (
+                      <Check className="h-4 w-4 text-green-500" />
+                    ) : (
+                      <Copy className="h-4 w-4" />
+                    )}
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Personal Information</CardTitle>
+              <CardDescription>Update your profile details and farm location</CardDescription>
+            </CardHeader>
+            <CardContent>
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="full_name">Full Name</Label>
@@ -136,6 +197,7 @@ const Profile = () => {
             </form>
           </CardContent>
         </Card>
+        </div>
       </div>
     </Layout>
   );
