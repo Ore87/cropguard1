@@ -108,21 +108,25 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
     </>
   );
 
-  const UserMenu = () => (
+  const NotificationsMenu = () => (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button variant="ghost" size="icon" className="relative">
-          <User className="h-5 w-5" />
+          <Bell className="h-5 w-5" />
+          {hasUrgentRecommendations && (
+            <Badge 
+              variant="destructive" 
+              className="absolute -top-1 -right-1 h-5 min-w-5 px-1.5 flex items-center justify-center text-xs"
+            >
+              {urgentCount}
+            </Badge>
+          )}
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-48">
-        <DropdownMenuItem onClick={() => navigate("/profile")}>
-          <User className="mr-2 h-4 w-4" />
-          Profile
-        </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => navigate("/alerts")} className="relative">
+      <DropdownMenuContent align="end" className="w-64">
+        <DropdownMenuItem onClick={() => navigate("/alerts")}>
           <Bell className="mr-2 h-4 w-4" />
-          Alerts
+          View All Alerts
           {hasUrgentRecommendations && (
             <Badge 
               variant="destructive" 
@@ -131,6 +135,26 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
               {urgentCount}
             </Badge>
           )}
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+
+  const UserMenu = () => (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button variant="ghost" size="icon">
+          <User className="h-5 w-5" />
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end" className="w-48">
+        <DropdownMenuItem onClick={() => navigate("/profile")}>
+          <User className="mr-2 h-4 w-4" />
+          Profile
+        </DropdownMenuItem>
+        <DropdownMenuItem onClick={() => navigate("/profile")}>
+          <Settings className="mr-2 h-4 w-4" />
+          Settings
         </DropdownMenuItem>
         <DropdownMenuSeparator />
         <DropdownMenuItem onClick={() => setShowSignOutDialog(true)}>
@@ -163,7 +187,10 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
         <Link to="/dashboard" className="text-xl font-bold text-primary">
           CropGuard
         </Link>
-        <UserMenu />
+        <div className="flex items-center gap-2">
+          <NotificationsMenu />
+          <UserMenu />
+        </div>
       </div>
 
       {/* Desktop Sidebar */}
@@ -172,7 +199,10 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
           <Link to="/dashboard" className="text-xl font-bold text-primary hover:text-primary/90 transition-colors">
             CropGuard
           </Link>
-          <UserMenu />
+          <div className="flex items-center gap-2">
+            <NotificationsMenu />
+            <UserMenu />
+          </div>
         </div>
         <nav className="flex flex-col gap-1 p-4">
           <NavigationLinks />
