@@ -20,7 +20,7 @@ serve(async (req) => {
 
     console.log('Received sensor data:', { temperature, humidity, light_intensity, soil_moisture, farm_id });
 
-    // Insert sensor data
+    // Insert sensor data (recorded_at is automatically set by database)
     const { data, error } = await supabase
       .from('sensor_data')
       .insert({
@@ -28,8 +28,7 @@ serve(async (req) => {
         temperature,
         humidity,
         light_intensity,
-        soil_moisture,
-        timestamp: new Date().toISOString()
+        soil_moisture
       })
       .select()
       .single();
