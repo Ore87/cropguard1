@@ -19,6 +19,7 @@ const Profile = () => {
     email: "",
     phone: "",
     farm_location: "",
+    unique_id: "",
   });
 
   useEffect(() => {
@@ -42,6 +43,7 @@ const Profile = () => {
           email: data.email || "",
           phone: data.phone || "",
           farm_location: data.farm_location || "",
+          unique_id: data.unique_id || "",
         });
       }
     } catch (error) {
@@ -109,35 +111,68 @@ const Profile = () => {
         </div>
 
         <div className="space-y-6 max-w-2xl">
-          {farmId && (
-            <Card>
-              <CardHeader>
-                <CardTitle>Farm ID</CardTitle>
-                <CardDescription>Use this ID for ESP32/IoT device integration</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="flex items-center gap-2">
-                  <Input
-                    value={farmId}
-                    readOnly
-                    className="bg-muted font-mono text-sm"
-                  />
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="icon"
-                    onClick={copyFarmId}
-                  >
-                    {copied ? (
-                      <Check className="h-4 w-4 text-green-500" />
-                    ) : (
+          <Card>
+            <CardHeader>
+              <CardTitle>Your CropGuard ID</CardTitle>
+              <CardDescription>Use this ID to login or for ESP32/IoT integration</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {profile.unique_id && (
+                <div>
+                  <Label>User ID</Label>
+                  <div className="flex items-center gap-2 mt-2">
+                    <Input
+                      value={profile.unique_id}
+                      readOnly
+                      className="bg-muted font-mono text-lg font-bold"
+                    />
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="icon"
+                      onClick={() => {
+                        navigator.clipboard.writeText(profile.unique_id);
+                        toast.success("User ID copied!");
+                      }}
+                    >
                       <Copy className="h-4 w-4" />
-                    )}
-                  </Button>
+                    </Button>
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-2">
+                    Login with this ID or your email + password
+                  </p>
                 </div>
-              </CardContent>
-            </Card>
-          )}
+              )}
+              
+              {farmId && (
+                <div>
+                  <Label>Farm ID</Label>
+                  <div className="flex items-center gap-2 mt-2">
+                    <Input
+                      value={farmId}
+                      readOnly
+                      className="bg-muted font-mono text-sm"
+                    />
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="icon"
+                      onClick={copyFarmId}
+                    >
+                      {copied ? (
+                        <Check className="h-4 w-4 text-green-500" />
+                      ) : (
+                        <Copy className="h-4 w-4" />
+                      )}
+                    </Button>
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-2">
+                    For ESP32 device configuration
+                  </p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
 
           <Card>
             <CardHeader>
