@@ -199,31 +199,36 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
               </nav>
             </SheetContent>
           </Sheet>
-          <NotificationsMenu />
-          <UserMenu />
         </div>
         <Link to="/dashboard" className="text-xl font-bold text-primary">
           CropGuard
         </Link>
-        <div className="w-[88px]"></div>
+        <div className="flex items-center gap-2">
+          <NotificationsMenu />
+          <UserMenu />
+        </div>
       </div>
 
       {/* Desktop Sidebar */}
       <aside className="hidden lg:block w-64 border-r border-border bg-card">
-        <div className="flex h-16 items-center border-b border-border px-6 gap-3">
+        <div className="flex h-16 items-center border-b border-border px-6">
           <Link to="/dashboard" className="text-xl font-bold text-primary hover:text-primary/90 transition-colors">
             CropGuard
           </Link>
-          <div className="flex items-center gap-2 ml-auto">
-            <NotificationsMenu />
-            <UserMenu />
-          </div>
         </div>
         <nav className="flex flex-col gap-1 p-4">
           <NavigationLinks />
         </nav>
       </aside>
-      <main className="flex-1 overflow-auto lg:ml-0 pt-16 lg:pt-0">
+      
+      {/* Top Bar for Desktop */}
+      <div className="hidden lg:block fixed top-0 right-0 left-64 h-16 border-b border-border bg-card z-40">
+        <div className="flex items-center justify-end h-full px-6 gap-2">
+          <NotificationsMenu />
+          <UserMenu />
+        </div>
+      </div>
+      <main className="flex-1 overflow-auto pt-16">
         {children}
         <AIChatWidget />
       </main>
