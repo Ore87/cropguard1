@@ -1,9 +1,11 @@
 import { useEffect, useState } from "react";
 import { Layout } from "@/components/Layout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
+import { Play, Square } from "lucide-react";
 
 interface SensorReading {
   recorded_at: string;
@@ -23,10 +25,35 @@ const Sensors = () => {
     humidity: 0,
     light_intensity: 0,
   });
+  const [isSimulating, setIsSimulating] = useState(false);
 
   useEffect(() => {
     fetchFarmAndData();
   }, [user]);
+
+  useEffect(() => {
+    if (!isSimulating) return;
+
+    const interval = setInterval(() => {
+      const newReading: SensorReading = {
+        recorded_at: new Date().toISOString(),
+        soil_moisture: Math.random() * 100,
+        temperature: 15 + Math.random() * 20,
+        humidity: 40 + Math.random() * 40,
+        light_intensity: Math.random() * 1000,
+      };
+
+      setSensorData(prev => [...prev.slice(-19), newReading]);
+      setCurrentValues({
+        soil_moisture: newReading.soil_moisture,
+        temperature: newReading.temperature,
+        humidity: newReading.humidity,
+        light_intensity: newReading.light_intensity,
+      });
+    }, 3000);
+
+    return () => clearInterval(interval);
+  }, [isSimulating]);
 
   useEffect(() => {
     if (!farmId) return;
@@ -119,9 +146,29 @@ const Sensors = () => {
   return (
     <Layout>
       <div className="p-8">
-        <div className="mb-6">
-          <h1 className="text-3xl font-bold text-foreground">Sensor Data (ESP32 Live Feed)</h1>
-          <p className="text-muted-foreground mt-2">Real-time data from your ESP32 device</p>
+        <div className="mb-6 flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold text-foreground">Sensor Data</h1>
+            <p className="text-muted-foreground mt-2">
+              {isSimulating ? "Simulated sensor data" : "Real-time data from your sensors"}
+            </p>
+          </div>
+          <Button
+            onClick={() => setIsSimulating(!isSimulating)}
+            variant={isSimulating ? "destructive" : "default"}
+          >
+            {isSimulating ? (
+              <>
+                <Square className="mr-2 h-4 w-4" />
+                Stop Simulation
+              </>
+            ) : (
+              <>
+                <Play className="mr-2 h-4 w-4" />
+                Run Simulation
+              </>
+            )}
+          </Button>
         </div>
 
         <div className="grid gap-6 lg:grid-cols-2">
