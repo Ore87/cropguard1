@@ -7,6 +7,13 @@ import { AIChatWidget } from "@/components/AIChatWidget";
 import { useFarmAdvisorStatus } from "@/hooks/useFarmAdvisorStatus";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
   AlertDialog,
   AlertDialogAction,
   AlertDialogCancel,
@@ -32,7 +39,8 @@ import {
   UserCog,
   Lightbulb,
   Menu,
-  ShoppingBag
+  ShoppingBag,
+  Settings
 } from "lucide-react";
 
 export const Layout = ({ children }: { children: React.ReactNode }) => {
@@ -54,12 +62,10 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
     { to: "/weather", icon: CloudSun, label: "Weather Forecast" },
     { to: "/upload", icon: Upload, label: "Scan for Pests" },
     { to: "/analysis", icon: FileSearch, label: "AI Analysis" },
-    { to: "/alerts", icon: Bell, label: "Alerts" },
     { to: "/market-trends", icon: TrendingUp, label: "Market Trends" },
     { to: "/farm-advisor", icon: Lightbulb, label: "Farm Advisor" },
     { to: "/expert-directory", icon: UserCog, label: "Expert Directory" },
     { to: "/farm-store", icon: ShoppingBag, label: "Farm Store" },
-    { to: "/profile", icon: User, label: "Profile" },
   ];
 
   const adminLinks = [
@@ -99,27 +105,46 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
           </Link>
         );
       })}
-      <Button
-        variant="ghost"
-        className="w-full justify-start gap-3 text-base mt-auto"
-        onClick={() => {
-          setShowSignOutDialog(true);
-          onLinkClick?.();
-        }}
-      >
-        <LogOut className="h-5 w-5" />
-        Sign Out
-      </Button>
     </>
+  );
+
+  const UserMenu = () => (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button variant="ghost" size="icon" className="relative">
+          <User className="h-5 w-5" />
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end" className="w-48">
+        <DropdownMenuItem onClick={() => navigate("/profile")}>
+          <User className="mr-2 h-4 w-4" />
+          Profile
+        </DropdownMenuItem>
+        <DropdownMenuItem onClick={() => navigate("/alerts")} className="relative">
+          <Bell className="mr-2 h-4 w-4" />
+          Alerts
+          {hasUrgentRecommendations && (
+            <Badge 
+              variant="destructive" 
+              className="ml-auto h-5 min-w-5 px-1.5 flex items-center justify-center text-xs"
+            >
+              {urgentCount}
+            </Badge>
+          )}
+        </DropdownMenuItem>
+        <DropdownMenuSeparator />
+        <DropdownMenuItem onClick={() => setShowSignOutDialog(true)}>
+          <LogOut className="mr-2 h-4 w-4" />
+          Sign Out
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
 
   return (
     <div className="flex min-h-screen bg-background">
       {/* Mobile Header */}
       <div className="lg:hidden fixed top-0 left-0 right-0 h-16 border-b border-border bg-card z-50 flex items-center justify-between px-4">
-        <Link to="/dashboard" className="text-xl font-bold text-primary">
-          CropGuard
-        </Link>
         <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
           <SheetTrigger asChild>
             <Button variant="ghost" size="icon">
@@ -135,14 +160,19 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
             </nav>
           </SheetContent>
         </Sheet>
+        <Link to="/dashboard" className="text-xl font-bold text-primary">
+          CropGuard
+        </Link>
+        <UserMenu />
       </div>
 
       {/* Desktop Sidebar */}
       <aside className="hidden lg:block w-64 border-r border-border bg-card">
-        <div className="flex h-16 items-center border-b border-border px-6">
+        <div className="flex h-16 items-center border-b border-border px-6 justify-between">
           <Link to="/dashboard" className="text-xl font-bold text-primary hover:text-primary/90 transition-colors">
             CropGuard
           </Link>
+          <UserMenu />
         </div>
         <nav className="flex flex-col gap-1 p-4">
           <NavigationLinks />
