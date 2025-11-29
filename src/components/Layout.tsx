@@ -1,11 +1,13 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { AIChatWidget } from "@/components/AIChatWidget";
 import { useFarmAdvisorStatus } from "@/hooks/useFarmAdvisorStatus";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { supabase } from "@/integrations/supabase/client";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -44,12 +46,32 @@ import {
 } from "lucide-react";
 
 export const Layout = ({ children }: { children: React.ReactNode }) => {
-  const { userRole, signOut } = useAuth();
+  const { user, userRole, signOut } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const { hasUrgentRecommendations, urgentCount } = useFarmAdvisorStatus();
   const [showSignOutDialog, setShowSignOutDialog] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [avatarUrl, setAvatarUrl] = useState<string>("");
+  const [userName, setUserName] = useState<string>("");
+
+  useEffect(() => {
+    const fetchProfile = async () => {
+      if (!user) return;
+      const { data } = await supabase
+        .from("profiles")
+        .select("avatar_url, full_name")
+        .eq("id", user.id)
+        .single();
+      
+      if (data) {
+        setAvatarUrl(data.avatar_url || "");
+        setUserName(data.full_name || "");
+      }
+    };
+
+    fetchProfile();
+  }, [user]);
 
   const handleSignOut = async () => {
     await signOut();
@@ -143,8 +165,13 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
   const UserMenu = () => (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size="icon">
-          <User className="h-5 w-5" />
+        <Button variant="ghost" size="icon" className="rounded-full">
+          <Avatar className="h-8 w-8">
+            <AvatarImage src={avatarUrl} alt={userName} />
+            <AvatarFallback>
+              {userName.split(' ').map(n => n[0]).join('').toUpperCase() || <User className="h-4 w-4" />}
+            </AvatarFallback>
+          </Avatar>
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-48">
