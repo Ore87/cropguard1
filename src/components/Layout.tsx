@@ -131,35 +131,22 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
   );
 
   const NotificationsMenu = () => (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size="icon" className="relative">
-          <Bell className="h-5 w-5" />
-          {hasUrgentRecommendations && (
-            <Badge 
-              variant="destructive" 
-              className="absolute -top-1 -right-1 h-5 min-w-5 px-1.5 flex items-center justify-center text-xs"
-            >
-              {urgentCount}
-            </Badge>
-          )}
-        </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-64">
-        <DropdownMenuItem onClick={() => navigate("/alerts")}>
-          <Bell className="mr-2 h-4 w-4" />
-          View All Alerts
-          {hasUrgentRecommendations && (
-            <Badge 
-              variant="destructive" 
-              className="ml-auto h-5 min-w-5 px-1.5 flex items-center justify-center text-xs"
-            >
-              {urgentCount}
-            </Badge>
-          )}
-        </DropdownMenuItem>
-      </DropdownMenuContent>
-    </DropdownMenu>
+    <Button 
+      variant="ghost" 
+      size="icon" 
+      className="relative"
+      onClick={() => navigate("/alerts")}
+    >
+      <Bell className="h-5 w-5" />
+      {hasUrgentRecommendations && (
+        <Badge 
+          variant="destructive" 
+          className="absolute -top-1 -right-1 h-5 min-w-5 px-1.5 flex items-center justify-center text-xs"
+        >
+          {urgentCount}
+        </Badge>
+      )}
+    </Button>
   );
 
   const UserMenu = () => (
@@ -196,37 +183,38 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
     <div className="flex min-h-screen bg-background">
       {/* Mobile Header */}
       <div className="lg:hidden fixed top-0 left-0 right-0 h-16 border-b border-border bg-card z-50 flex items-center justify-between px-4">
-        <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
-          <SheetTrigger asChild>
-            <Button variant="ghost" size="icon">
-              <Menu className="h-6 w-6" />
-            </Button>
-          </SheetTrigger>
-          <SheetContent side="left" className="w-64 p-0">
-            <div className="flex h-16 items-center border-b border-border px-6">
-              <h1 className="text-xl font-bold text-primary">CropGuard</h1>
-            </div>
-            <nav className="flex flex-col gap-1 p-4">
-              <NavigationLinks onLinkClick={() => setMobileMenuOpen(false)} />
-            </nav>
-          </SheetContent>
-        </Sheet>
-        <Link to="/dashboard" className="text-xl font-bold text-primary">
-          CropGuard
-        </Link>
         <div className="flex items-center gap-2">
+          <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
+            <SheetTrigger asChild>
+              <Button variant="ghost" size="icon">
+                <Menu className="h-6 w-6" />
+              </Button>
+            </SheetTrigger>
+            <SheetContent side="left" className="w-64 p-0">
+              <div className="flex h-16 items-center border-b border-border px-6">
+                <h1 className="text-xl font-bold text-primary">CropGuard</h1>
+              </div>
+              <nav className="flex flex-col gap-1 p-4">
+                <NavigationLinks onLinkClick={() => setMobileMenuOpen(false)} />
+              </nav>
+            </SheetContent>
+          </Sheet>
           <NotificationsMenu />
           <UserMenu />
         </div>
+        <Link to="/dashboard" className="text-xl font-bold text-primary">
+          CropGuard
+        </Link>
+        <div className="w-[88px]"></div>
       </div>
 
       {/* Desktop Sidebar */}
       <aside className="hidden lg:block w-64 border-r border-border bg-card">
-        <div className="flex h-16 items-center border-b border-border px-6 justify-between">
+        <div className="flex h-16 items-center border-b border-border px-6 gap-3">
           <Link to="/dashboard" className="text-xl font-bold text-primary hover:text-primary/90 transition-colors">
             CropGuard
           </Link>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 ml-auto">
             <NotificationsMenu />
             <UserMenu />
           </div>
