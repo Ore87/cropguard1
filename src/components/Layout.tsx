@@ -118,7 +118,7 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
       {/* Mobile Header */}
       <div className="lg:hidden fixed top-0 left-0 right-0 h-16 border-b border-border bg-card z-50 flex items-center justify-between px-4">
         <Link to="/dashboard" className="text-xl font-bold text-primary">
-          KwaVest
+          CropGuard
         </Link>
         <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
           <SheetTrigger asChild>
@@ -128,7 +128,7 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
           </SheetTrigger>
           <SheetContent side="left" className="w-64 p-0">
             <div className="flex h-16 items-center border-b border-border px-6">
-              <h1 className="text-xl font-bold text-primary">KwaVest</h1>
+              <h1 className="text-xl font-bold text-primary">CropGuard</h1>
             </div>
             <nav className="flex flex-col gap-1 p-4">
               <NavigationLinks onLinkClick={() => setMobileMenuOpen(false)} />
@@ -141,7 +141,7 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
       <aside className="hidden lg:block w-64 border-r border-border bg-card">
         <div className="flex h-16 items-center border-b border-border px-6">
           <Link to="/dashboard" className="text-xl font-bold text-primary hover:text-primary/90 transition-colors">
-            KwaVest
+            CropGuard
           </Link>
         </div>
         <nav className="flex flex-col gap-1 p-4">

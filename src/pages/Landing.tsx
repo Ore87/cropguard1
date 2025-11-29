@@ -209,7 +209,7 @@ const Landing = () => {
         <div className="container mx-auto px-6">
           <div className="text-center mb-16">
             <h3 className="text-3xl md:text-4xl font-bold text-foreground mb-4">
-              How KwaVest Works
+              How CropGuard Works
             </h3>
             <p className="text-lg text-muted-foreground max-w-3xl mx-auto">
               Three simple steps to total farm intelligence
@@ -225,7 +225,7 @@ const Landing = () => {
                 Monitor Continuously
               </h4>
               <p className="text-muted-foreground">
-                Connect IoT sensors and access live weather data. KwaVest tracks your farm's conditions in real-time, 24/7.
+                Connect IoT sensors and access live weather data. CropGuard tracks your farm's conditions in real-time, 24/7.
               </p>
             </div>
             <div className="text-center">
