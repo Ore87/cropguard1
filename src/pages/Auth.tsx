@@ -45,8 +45,26 @@ const Auth = () => {
     setLoading(true);
 
     try {
+      let emailToUse = loginEmail;
+      
+      // Check if input is a user ID (format: CG-#####)
+      if (loginEmail.match(/^CG-\d{5}$/i)) {
+        // Look up email from unique_id
+        const { data: profile, error: profileError } = await supabase
+          .from("profiles")
+          .select("email")
+          .ilike("unique_id", loginEmail)
+          .single();
+        
+        if (profileError || !profile) {
+          throw new Error("User ID not found");
+        }
+        
+        emailToUse = profile.email;
+      }
+
       const { error } = await supabase.auth.signInWithPassword({
-        email: loginEmail,
+        email: emailToUse,
         password: loginPassword,
       });
       if (error) throw error;
@@ -164,15 +182,18 @@ const Auth = () => {
               ) : (
                 <form onSubmit={handleLogin} className="space-y-4">
                   <div className="space-y-2">
-                    <Label htmlFor="login-email">Email</Label>
+                    <Label htmlFor="login-email">Email or User ID</Label>
                     <Input
                       id="login-email"
-                      type="email"
-                      placeholder="farmer@example.com"
+                      type="text"
+                      placeholder="farmer@example.com or CG-10001"
                       value={loginEmail}
                       onChange={(e) => setLoginEmail(e.target.value)}
                       required
                     />
+                    <p className="text-xs text-muted-foreground">
+                      You can login with your email or your CropGuard ID (e.g., CG-10001)
+                    </p>
                   </div>
 
                   <div className="space-y-2">
