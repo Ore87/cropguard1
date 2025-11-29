@@ -55,37 +55,6 @@ const Sensors = () => {
     return () => clearInterval(interval);
   }, [isSimulating]);
 
-  useEffect(() => {
-    if (!farmId) return;
-
-    // Subscribe to real-time sensor data updates
-    const channel = supabase
-      .channel('sensor-data-changes')
-      .on(
-        'postgres_changes',
-        {
-          event: 'INSERT',
-          schema: 'public',
-          table: 'sensor_data',
-          filter: `farm_id=eq.${farmId}`
-        },
-        (payload) => {
-          const newReading = payload.new as SensorReading;
-          setSensorData(prev => [...prev.slice(-19), newReading]);
-          setCurrentValues({
-            soil_moisture: newReading.soil_moisture || 0,
-            temperature: newReading.temperature || 0,
-            humidity: newReading.humidity || 0,
-            light_intensity: newReading.light_intensity || 0,
-          });
-        }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [farmId]);
 
   const fetchFarmAndData = async () => {
     if (!user) return;
