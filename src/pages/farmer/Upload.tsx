@@ -55,12 +55,12 @@ const createAlertIfNeeded = async (reportId: string, scanType: string) => {
 
 const Upload = () => {
   const navigate = useNavigate();
-  const [spotCheckFile, setSpotCheckFile] = useState<File | null>(null);
-  const [droneFile, setDroneFile] = useState<File | null>(null);
+  const [spotCheckFiles, setSpotCheckFiles] = useState<File[]>([]);
+  const [droneFiles, setDroneFiles] = useState<File[]>([]);
   const [spotCheckLoading, setSpotCheckLoading] = useState(false);
   const [droneLoading, setDroneLoading] = useState(false);
-  const [spotCheckPreview, setSpotCheckPreview] = useState<string | null>(null);
-  const [dronePreview, setDronePreview] = useState<string | null>(null);
+  const [spotCheckPreviews, setSpotCheckPreviews] = useState<string[]>([]);
+  const [dronePreviews, setDronePreviews] = useState<string[]>([]);
   
   // Live Scan state
   const [liveScanActive, setLiveScanActive] = useState(false);
@@ -363,54 +363,65 @@ const Upload = () => {
 
   const handleSpotCheck = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!spotCheckFile) {
-      toast.error("Please select an image");
+    if (spotCheckFiles.length === 0) {
+      toast.error("Please select at least one image");
       return;
     }
 
     setSpotCheckLoading(true);
     
     try {
-      // Upload image to storage
-      const fileExt = spotCheckFile.name.split('.').pop();
-      const fileName = `${Math.random()}.${fileExt}`;
-      const filePath = `${fileName}`;
+      toast.info(`Processing ${spotCheckFiles.length} file(s)...`);
+      const reportIds: string[] = [];
+      
+      // Process all files
+      for (let i = 0; i < spotCheckFiles.length; i++) {
+        const file = spotCheckFiles[i];
+        toast.info(`Processing file ${i + 1} of ${spotCheckFiles.length}...`);
+        
+        // Upload image to storage
+        const fileExt = file.name.split('.').pop();
+        const fileName = `${Math.random()}.${fileExt}`;
+        const filePath = `${fileName}`;
 
-      const { error: uploadError } = await supabase.storage
-        .from('crop-scans')
-        .upload(filePath, spotCheckFile);
+        const { error: uploadError } = await supabase.storage
+          .from('crop-scans')
+          .upload(filePath, file);
 
-      if (uploadError) {
-        throw new Error(`Upload failed: ${uploadError.message}`);
-      }
-
-      // Get public URL
-      const { data: { publicUrl } } = supabase.storage
-        .from('crop-scans')
-        .getPublicUrl(filePath);
-
-      // Call detection edge function
-      const { data, error } = await supabase.functions.invoke('detect-pest', {
-        body: { 
-          imageUrl: publicUrl,
-          scanType: 'spot_check'
+        if (uploadError) {
+          throw new Error(`Upload failed for ${file.name}: ${uploadError.message}`);
         }
-      });
 
-      if (error) {
-        throw new Error(error.message);
+        // Get public URL
+        const { data: { publicUrl } } = supabase.storage
+          .from('crop-scans')
+          .getPublicUrl(filePath);
+
+        // Call detection edge function
+        const { data, error } = await supabase.functions.invoke('detect-pest', {
+          body: { 
+            imageUrl: publicUrl,
+            scanType: 'spot_check'
+          }
+        });
+
+        if (error) {
+          throw new Error(`Detection failed for ${file.name}: ${error.message}`);
+        }
+
+        reportIds.push(data.reportId);
+        
+        // Create alert if high/medium infestation detected
+        await createAlertIfNeeded(data.reportId, 'spot_check');
       }
 
-      toast.success(`Detection complete! Found ${data.detectionsCount || data.detections?.length || 0} pest(s)`);
+      toast.success(`All ${spotCheckFiles.length} file(s) processed successfully!`);
       
-      // Create alert if high/medium infestation detected
-      await createAlertIfNeeded(data.reportId, 'spot_check');
-      
-      // Redirect to report details
-      navigate(`/farmer/report/${data.reportId}`);
+      // Navigate to the first report
+      navigate(`/farmer/report/${reportIds[0]}`);
     } catch (error) {
       console.error('Error during spot check:', error);
-      toast.error(error instanceof Error ? error.message : 'Failed to analyze image');
+      toast.error(error instanceof Error ? error.message : 'Failed to analyze images');
     } finally {
       setSpotCheckLoading(false);
     }
@@ -418,81 +429,92 @@ const Upload = () => {
 
   const handleDroneFlight = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!droneFile) {
-      toast.error("Please select an image or video");
+    if (droneFiles.length === 0) {
+      toast.error("Please select at least one image or video");
       return;
     }
 
     setDroneLoading(true);
     
     try {
-      console.log('Starting drone flight upload for file:', droneFile.name, 'Size:', droneFile.size, 'Type:', droneFile.type);
+      toast.info(`Processing ${droneFiles.length} file(s)...`);
+      const reportIds: string[] = [];
       
-      // Upload file to storage
-      const fileExt = droneFile.name.split('.').pop();
-      const fileName = `${Math.random()}.${fileExt}`;
-      const filePath = `${fileName}`;
+      // Process all files
+      for (let i = 0; i < droneFiles.length; i++) {
+        const file = droneFiles[i];
+        toast.info(`Processing file ${i + 1} of ${droneFiles.length}...`);
+        
+        console.log('Starting drone flight upload for file:', file.name, 'Size:', file.size, 'Type:', file.type);
+        
+        // Upload file to storage
+        const fileExt = file.name.split('.').pop();
+        const fileName = `${Math.random()}.${fileExt}`;
+        const filePath = `${fileName}`;
 
-      console.log('Uploading to storage:', filePath);
-      const { error: uploadError } = await supabase.storage
-        .from('crop-scans')
-        .upload(filePath, droneFile, {
-          contentType: droneFile.type,
-          cacheControl: '3600',
-          upsert: false
+        console.log('Uploading to storage:', filePath);
+        const { error: uploadError } = await supabase.storage
+          .from('crop-scans')
+          .upload(filePath, file, {
+            contentType: file.type,
+            cacheControl: '3600',
+            upsert: false
+          });
+
+        if (uploadError) {
+          console.error('Storage upload error:', uploadError);
+          throw new Error(`Upload failed for ${file.name}: ${uploadError.message}`);
+        }
+
+        console.log('File uploaded successfully, getting public URL');
+        
+        // Get public URL
+        const { data: { publicUrl } } = supabase.storage
+          .from('crop-scans')
+          .getPublicUrl(filePath);
+
+        console.log('Public URL obtained:', publicUrl);
+        console.log('Calling detect-pest edge function...');
+
+        // Call detection edge function with extended timeout for videos
+        const isVideo = file.type.startsWith('video/');
+        
+        // Show different messages for video vs image
+        if (isVideo) {
+          toast.info('Processing video... This may take up to 5 minutes for longer videos.');
+        }
+        
+        const { data, error } = await supabase.functions.invoke('detect-pest', {
+          body: { 
+            imageUrl: publicUrl,
+            scanType: 'drone_flight'
+          }
         });
 
-      if (uploadError) {
-        console.error('Storage upload error:', uploadError);
-        throw new Error(`Upload failed: ${uploadError.message}`);
-      }
+        console.log('Edge function response:', { data, error });
 
-      console.log('File uploaded successfully, getting public URL');
-      
-      // Get public URL
-      const { data: { publicUrl } } = supabase.storage
-        .from('crop-scans')
-        .getPublicUrl(filePath);
-
-      console.log('Public URL obtained:', publicUrl);
-      console.log('Calling detect-pest edge function...');
-
-      // Call detection edge function with extended timeout for videos
-      const isVideo = droneFile.type.startsWith('video/');
-      
-      // Show different messages for video vs image
-      if (isVideo) {
-        toast.info('Processing video... This may take up to 5 minutes for longer videos.');
-      }
-      
-      const { data, error } = await supabase.functions.invoke('detect-pest', {
-        body: { 
-          imageUrl: publicUrl,
-          scanType: 'drone_flight'
+        if (error) {
+          console.error('Edge function error:', error);
+          throw new Error(`Detection failed for ${file.name}: ${error.message}`);
         }
-      });
 
-      console.log('Edge function response:', { data, error });
+        if (!data) {
+          throw new Error('No data received from detection service');
+        }
 
-      if (error) {
-        console.error('Edge function error:', error);
-        throw new Error(`Detection failed: ${error.message}`);
+        reportIds.push(data.reportId);
+        
+        // Create alert if high/medium infestation detected
+        await createAlertIfNeeded(data.reportId, 'drone_flight');
       }
 
-      if (!data) {
-        throw new Error('No data received from detection service');
-      }
-
-      toast.success(`Detection complete! Found ${data.detectionsCount || data.detections?.length || 0} pest(s)`);
+      toast.success(`All ${droneFiles.length} file(s) processed successfully!`);
       
-      // Create alert if high/medium infestation detected
-      await createAlertIfNeeded(data.reportId, 'drone_flight');
-      
-      // Redirect to report details
-      navigate(`/farmer/report/${data.reportId}`);
+      // Navigate to the first report
+      navigate(`/farmer/report/${reportIds[0]}`);
     } catch (error) {
       console.error('Error during drone flight analysis:', error);
-      const errorMessage = error instanceof Error ? error.message : 'Failed to analyze file';
+      const errorMessage = error instanceof Error ? error.message : 'Failed to analyze files';
       toast.error(errorMessage);
     } finally {
       setDroneLoading(false);
@@ -599,7 +621,7 @@ const Upload = () => {
                 <Camera className="h-8 w-8 text-primary" />
                 <div>
                   <CardTitle>Spot Check (Quick Scan)</CardTitle>
-                  <CardDescription>Upload a single image for instant analysis</CardDescription>
+                  <CardDescription>Upload one or more images/videos for instant analysis</CardDescription>
                 </div>
               </div>
             </CardHeader>
@@ -607,46 +629,50 @@ const Upload = () => {
               <form onSubmit={handleSpotCheck} className="space-y-4">
                 <div className="space-y-2">
                   <label className="text-sm font-medium text-foreground">
-                    Upload Image
+                    Upload Images/Videos (Multiple)
                   </label>
                   <Input
                     type="file"
                     accept="image/*,video/*"
+                    multiple
                     onChange={(e) => {
-                      const file = e.target.files?.[0] || null;
-                      setSpotCheckFile(file);
-                      if (file) {
-                        setSpotCheckPreview(URL.createObjectURL(file));
-                      } else {
-                        setSpotCheckPreview(null);
-                      }
+                      const files = Array.from(e.target.files || []);
+                      setSpotCheckFiles(files);
+                      const previews = files.map(file => URL.createObjectURL(file));
+                      setSpotCheckPreviews(previews);
                     }}
                     disabled={spotCheckLoading}
                   />
                   <p className="text-xs text-muted-foreground">
-                    Supported formats: JPG, PNG, WEBP, MP4, AVI, MOV
+                    Supported formats: JPG, PNG, WEBP, MP4, AVI, MOV (Multiple files allowed)
                   </p>
                 </div>
                 
-                {spotCheckFile && spotCheckPreview && (
+                {spotCheckFiles.length > 0 && (
                   <div className="rounded-lg border border-border p-4 space-y-2">
-                    <p className="text-sm font-medium text-foreground">Selected file:</p>
-                    <p className="text-sm text-muted-foreground">{spotCheckFile.name}</p>
-                    {spotCheckFile.type.startsWith('image/') ? (
-                      <img src={spotCheckPreview} alt="Preview" className="w-full rounded-md mt-2" />
-                    ) : (
-                      <video src={spotCheckPreview} controls className="w-full rounded-md mt-2" />
-                    )}
+                    <p className="text-sm font-medium text-foreground">Selected {spotCheckFiles.length} file(s):</p>
+                    <div className="grid grid-cols-2 gap-2">
+                      {spotCheckFiles.map((file, index) => (
+                        <div key={index} className="space-y-1">
+                          <p className="text-xs text-muted-foreground truncate">{file.name}</p>
+                          {file.type.startsWith('image/') ? (
+                            <img src={spotCheckPreviews[index]} alt={`Preview ${index + 1}`} className="w-full rounded-md" />
+                          ) : (
+                            <video src={spotCheckPreviews[index]} controls className="w-full rounded-md" />
+                          )}
+                        </div>
+                      ))}
+                    </div>
                   </div>
                 )}
 
                 <Button 
                   type="submit" 
                   className="w-full"
-                  disabled={spotCheckLoading || !spotCheckFile}
+                  disabled={spotCheckLoading || spotCheckFiles.length === 0}
                 >
                   <UploadIcon className="mr-2 h-4 w-4" />
-                  {spotCheckLoading ? "Analyzing..." : "Upload Image or Video"}
+                  {spotCheckLoading ? "Analyzing..." : `Upload ${spotCheckFiles.length || ''} File(s)`}
                 </Button>
               </form>
             </CardContent>
@@ -658,7 +684,7 @@ const Upload = () => {
                 <Plane className="h-8 w-8 text-primary" />
                 <div>
                   <CardTitle>Drone Flight (Deep Scan)</CardTitle>
-                  <CardDescription>Upload high-resolution drone imagery</CardDescription>
+                  <CardDescription>Upload one or more high-resolution drone images/videos</CardDescription>
                 </div>
               </div>
             </CardHeader>
@@ -666,46 +692,50 @@ const Upload = () => {
               <form onSubmit={handleDroneFlight} className="space-y-4">
                 <div className="space-y-2">
                   <label className="text-sm font-medium text-foreground">
-                    Upload High-Resolution Image
+                    Upload High-Resolution Images/Videos (Multiple)
                   </label>
                   <Input
                     type="file"
                     accept="image/*,video/*"
+                    multiple
                     onChange={(e) => {
-                      const file = e.target.files?.[0] || null;
-                      setDroneFile(file);
-                      if (file) {
-                        setDronePreview(URL.createObjectURL(file));
-                      } else {
-                        setDronePreview(null);
-                      }
+                      const files = Array.from(e.target.files || []);
+                      setDroneFiles(files);
+                      const previews = files.map(file => URL.createObjectURL(file));
+                      setDronePreviews(previews);
                     }}
                     disabled={droneLoading}
                   />
                   <p className="text-xs text-muted-foreground">
-                    Supported formats: JPG, PNG, WEBP, MP4, AVI, MOV
+                    Supported formats: JPG, PNG, WEBP, MP4, AVI, MOV (Multiple files allowed)
                   </p>
                 </div>
                 
-                {droneFile && dronePreview && (
+                {droneFiles.length > 0 && (
                   <div className="rounded-lg border border-border p-4 space-y-2">
-                    <p className="text-sm font-medium text-foreground">Selected file:</p>
-                    <p className="text-sm text-muted-foreground">{droneFile.name}</p>
-                    {droneFile.type.startsWith('image/') ? (
-                      <img src={dronePreview} alt="Preview" className="w-full rounded-md mt-2" />
-                    ) : (
-                      <video src={dronePreview} controls className="w-full rounded-md mt-2" />
-                    )}
+                    <p className="text-sm font-medium text-foreground">Selected {droneFiles.length} file(s):</p>
+                    <div className="grid grid-cols-2 gap-2">
+                      {droneFiles.map((file, index) => (
+                        <div key={index} className="space-y-1">
+                          <p className="text-xs text-muted-foreground truncate">{file.name}</p>
+                          {file.type.startsWith('image/') ? (
+                            <img src={dronePreviews[index]} alt={`Preview ${index + 1}`} className="w-full rounded-md" />
+                          ) : (
+                            <video src={dronePreviews[index]} controls className="w-full rounded-md" />
+                          )}
+                        </div>
+                      ))}
+                    </div>
                   </div>
                 )}
 
                 <Button 
                   type="submit" 
                   className="w-full"
-                  disabled={droneLoading || !droneFile}
+                  disabled={droneLoading || droneFiles.length === 0}
                 >
                   <UploadIcon className="mr-2 h-4 w-4" />
-                  {droneLoading ? "Processing..." : "Upload Image or Video"}
+                  {droneLoading ? "Processing..." : `Upload ${droneFiles.length || ''} File(s)`}
                 </Button>
               </form>
             </CardContent>
