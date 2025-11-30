@@ -35,12 +35,12 @@ serve(async (req) => {
     console.log('Image URL:', imageUrl);
     console.log('Scan type:', scanType);
 
-    // Get the farm_id for the user
-    const { data: farmData, error: farmError } = await supabase
+    // Get the farm_id for the user (take first farm if multiple)
+    const { data: farmList, error: farmError } = await supabase
       .from('farms')
       .select('id')
       .eq('farmer_id', user.id)
-      .maybeSingle();
+      .limit(1);
 
     if (farmError) {
       console.error('Farm fetch error:', farmError);
@@ -50,13 +50,15 @@ serve(async (req) => {
       );
     }
 
-    if (!farmData) {
+    if (!farmList || farmList.length === 0) {
       console.error('No farm found for user:', user.id);
       return new Response(
         JSON.stringify({ error: 'No farm associated with user. Please create a farm first.' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
+
+    const farmData = farmList[0];
 
     // Download the file from Supabase Storage
     const imagePathMatch = imageUrl.match(/crop-scans\/(.+)$/);
