@@ -154,7 +154,7 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
       <DropdownMenuTrigger asChild>
         <Button variant="ghost" size="icon" className="rounded-full">
           <Avatar className="h-8 w-8">
-            <AvatarImage src={avatarUrl} alt={userName} />
+            <AvatarImage src={avatarUrl} alt={userName} className="object-cover" />
             <AvatarFallback>
               {userName.split(' ').map(n => n[0]).join('').toUpperCase() || <User className="h-4 w-4" />}
             </AvatarFallback>

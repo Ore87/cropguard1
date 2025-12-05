@@ -105,20 +105,22 @@ const Profile = () => {
 
       if (uploadError) throw uploadError;
 
-      // Get public URL
+      // Get public URL with cache-busting timestamp
       const { data: { publicUrl } } = supabase.storage
         .from('avatars')
         .getPublicUrl(filePath);
 
+      const urlWithCacheBust = `${publicUrl}?t=${Date.now()}`;
+
       // Update profile
       const { error: updateError } = await supabase
         .from('profiles')
-        .update({ avatar_url: publicUrl })
+        .update({ avatar_url: urlWithCacheBust })
         .eq('id', user.id);
 
       if (updateError) throw updateError;
 
-      setProfile({ ...profile, avatar_url: publicUrl });
+      setProfile({ ...profile, avatar_url: urlWithCacheBust });
       toast.success("Profile picture updated!");
     } catch (error: any) {
       toast.error(error.message || "Failed to upload avatar");
@@ -192,7 +194,11 @@ const Profile = () => {
             </CardHeader>
             <CardContent className="flex flex-col items-center gap-4">
               <Avatar className="h-32 w-32">
-                <AvatarImage src={profile.avatar_url} alt={profile.full_name} />
+                <AvatarImage 
+                  src={profile.avatar_url} 
+                  alt={profile.full_name}
+                  className="object-cover"
+                />
                 <AvatarFallback className="text-3xl">
                   {profile.full_name.split(' ').map(n => n[0]).join('').toUpperCase() || 'U'}
                 </AvatarFallback>
